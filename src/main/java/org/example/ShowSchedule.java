@@ -1,0 +1,169 @@
+package org.example;
+
+import org.telegram.telegrambots.meta.api.objects.Update;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.Arrays;
+
+public class ShowSchedule {
+    public void showSchedule(String userClass, long chatId, String school) throws Exception {
+        Class.forName("org.postgresql.Driver");
+        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
+        Statement statement = connection.createStatement();
+        String zapros = "SELECT schedule_id, lesson_id, lesson, class, dotw " +
+                "FROM btschema.schedule where class = '" + userClass + "' and lesson <> 'null' and lesson <> ''and school='" + school + "' order by schedule_id";
+        Bot bot = new Bot();
+        ResultSet rs = statement.executeQuery(zapros);
+        String textForUser = "Расписание для " + userClass + ": \nПонедельник\n" + " |№ урока| Урок\n";
+        while (rs.next() && rs != null) {
+            while (rs.getString("dotw").equalsIgnoreCase("ПОНЕДЕЛЬНИК") && rs != null) {
+                textForUser += "| " + rs.getString("lesson_id") + " | " +
+                        rs.getString("lesson") + " \n";
+                rs.next();
+            }
+            textForUser += "Вторник\n" + " |№ урока| Урок\n";
+            while (rs.getString("dotw").equalsIgnoreCase("ВТОРНИК") && rs != null) {
+                textForUser += "| " + rs.getString("lesson_id") + " | " +
+                        rs.getString("lesson") + " \n";
+                rs.next();
+            }
+            textForUser += "Среда\n" + " |№ урока| Урок\n";
+            while (rs.getString("dotw").equalsIgnoreCase("СРЕДА") && rs != null) {
+                textForUser += "| " + rs.getString("lesson_id") + " | " +
+                        rs.getString("lesson") + " \n";
+                rs.next();
+            }
+            textForUser += "Четверг\n" + " |№ урока|\n";
+            while (rs.getString("dotw").equalsIgnoreCase("ЧЕТВЕРГ") && rs != null) {
+                textForUser += "| " + rs.getString("lesson_id") + " | " +
+                        rs.getString("lesson") + " \n";
+                rs.next();
+            }
+            textForUser += "Пятница\n" + " |№ урока| Урок\n";
+            while (rs.getString("dotw").equalsIgnoreCase("ПЯТНИЦА") && rs != null) {
+                textForUser += "| " + rs.getString("lesson_id") + " | " +
+                        rs.getString("lesson") + " \n";
+                rs.next();
+            }
+            textForUser += "Суббота\n" + " |№ урока| Урок\n";
+            while (rs.getString("dotw").equalsIgnoreCase("СУББОТА") && rs != null) {
+                textForUser += "| " + rs.getString("lesson_id") + " | " +
+                        rs.getString("lesson") + " \n";
+                if (rs.isLast()) {
+                    break;
+                }
+                rs.next();
+            }
+            break;
+        }
+        if (chatId == 743234635 || chatId == 1188351220 || chatId == 5959939548L || chatId == 5471231917L) {
+            bot.sendTextToAdmin(chatId, textForUser);
+        } else {
+            bot.sendText(chatId, textForUser);
+        }
+        statement.close();
+        connection.close();
+        rs.close();
+    }
+
+    public int getClassNumb(String school) throws Exception {
+        String numbs = "";
+        Class.forName("org.postgresql.Driver");
+        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
+        Statement statement = connection.createStatement();
+        String zapros = "SELECT Distinct class FROM btschema.schedule where class <> '' AND school='" + school + "'";
+        ResultSet rs = statement.executeQuery(zapros);
+        int i = 0, value = 1, value2 = 1;
+        while (rs.next() && rs != null) {
+            numbs = rs.getString("class");
+            value = Integer.parseInt(numbs.replaceAll("[^0-9]", ""));
+            if (value2 > value) {
+                value = value2;
+            }
+            value2 = value;
+        }
+        statement.close();
+        connection.close();
+        rs.close();
+        return value;
+    }
+
+    public String[] getClassLetter(String numbClass) throws Exception {
+        String lets[] = new String[10];
+        String[] lets2 = new String[10];
+        Class.forName("org.postgresql.Driver");
+        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
+        Statement statement = connection.createStatement();
+        String zapros = "SELECT Distinct class FROM btschema.schedule where class like '" + numbClass + "%' group by class order by class";
+        ResultSet rs = statement.executeQuery(zapros);
+        int x = 0;
+        while (rs.next() && rs != null) {
+            if (Integer.parseInt(numbClass) < 10) {
+                lets[x] = rs.getString("class");
+                lets[x] = lets[x].replaceAll("[0-9]", "");
+            } else {
+                lets[x] = rs.getString("class");
+                lets[x] = lets[x].replaceAll("[0-9]+[0-9]", "");
+                lets[x] = lets[x].substring(0, 1);
+                lets2 = Arrays.stream(lets)
+                        .distinct()
+                        .toArray(String[]::new);
+            }
+            x++;
+        }
+        statement.close();
+        connection.close();
+        rs.close();
+        if (Integer.parseInt(numbClass) < 10) {
+            return lets;
+        } else {
+            return lets2;
+        }
+    }
+
+    public String[] getClassProf(String numbClass) throws Exception {
+        String lets[] = new String[10];
+        Class.forName("org.postgresql.Driver");
+        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
+        Statement statement = connection.createStatement();
+        String zapros = "SELECT Distinct class FROM btschema.schedule where class like '" + numbClass + "%' group by class order by class";
+        ResultSet rs = statement.executeQuery(zapros);
+        int x = 0;
+        while (rs.next() && rs != null) {
+            lets[x] = rs.getString("class");
+            lets[x] = lets[x].replaceAll("[0-9].$", "");
+            x++;
+        }
+        statement.close();
+        connection.close();
+        rs.close();
+        return lets;
+    }
+
+    public String showSchedule(long chatId, String klas, String dotatw, String school) throws Exception {
+        Class.forName("org.postgresql.Driver");
+        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
+        Statement statement = connection.createStatement();
+        String zapros = "SELECT schedule_id, lesson_id, lesson, class, dotw,school " +
+                "FROM btschema.schedule where class = '" + klas + "' and lesson <> 'null' and school='" + school + "' and lesson <> '' and dotw ='" + dotatw.toUpperCase() + "' order by schedule_id";
+        Bot bot = new Bot();
+        ResultSet rs = statement.executeQuery(zapros);
+        String textForUser = "Расписание для " + klas + ": \n" + " |№ урока| Урок\n";
+        while (rs.next() && rs != null) {
+            textForUser += "| " + rs.getString("lesson_id") + " | " +
+                    rs.getString("lesson") + "  " + "\n";
+        }
+//        if (chatId == 743234635 || chatId == 1188351220 || chatId == 5959939548L || chatId == 5471231917L) {
+//            bot.sendTextToAdmin(chatId, textForUser);
+//        } else {
+//            bot.sendText(chatId, textForUser);
+//        }
+        statement.close();
+        connection.close();
+        rs.close();
+        return textForUser;
+    }
+}
