@@ -6,7 +6,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ShowSchedule {
     public void showSchedule(String userClass, long chatId, String school) throws Exception {
@@ -60,9 +61,11 @@ public class ShowSchedule {
             break;
         }
         if (chatId == 743234635 || chatId == 1188351220 || chatId == 5959939548L || chatId == 5471231917L) {
-            bot.sendTextToAdmin(chatId, textForUser);
+            bot.universalMethodForSend(chatId, textForUser,
+                    new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки"});
         } else {
-            bot.sendText(chatId, textForUser);
+            bot.universalMethodForSend(chatId, textForUser,
+                    new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки"});
         }
         statement.close();
         connection.close();
@@ -92,36 +95,31 @@ public class ShowSchedule {
     }
 
     public String[] getClassLetter(String numbClass) throws Exception {
-        String lets[] = new String[10];
-        String[] lets2 = new String[10];
+        List<String> letss = new ArrayList<>();
         Class.forName("org.postgresql.Driver");
         Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
         Statement statement = connection.createStatement();
         String zapros = "SELECT Distinct class FROM btschema.schedule where class like '" + numbClass + "%' group by class order by class";
         ResultSet rs = statement.executeQuery(zapros);
-        int x = 0;
         while (rs.next() && rs != null) {
             if (Integer.parseInt(numbClass) < 10) {
-                lets[x] = rs.getString("class");
-                lets[x] = lets[x].replaceAll("[0-9]", "");
+                letss.add(rs.getString("class").replaceAll("[0-9]", ""));
             } else {
-                lets[x] = rs.getString("class");
-                lets[x] = lets[x].replaceAll("[0-9]+[0-9]", "");
-                lets[x] = lets[x].substring(0, 1);
-                lets2 = Arrays.stream(lets)
-                        .distinct()
-                        .toArray(String[]::new);
+                letss.add(rs.getString("class").replaceAll("[0-9]+[0-9]", "").substring(0, 1));
+                letss.stream().distinct();
             }
+
+        }
+        int x = 0;
+        String lets[] = new String[letss.size()];
+        for (String temp : letss) {
+            lets[x] = temp;
             x++;
         }
         statement.close();
         connection.close();
         rs.close();
-        if (Integer.parseInt(numbClass) < 10) {
-            return lets;
-        } else {
-            return lets2;
-        }
+        return lets;
     }
 
     public String[] getClassProf(String numbClass) throws Exception {

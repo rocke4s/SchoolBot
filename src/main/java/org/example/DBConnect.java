@@ -26,7 +26,6 @@ public class DBConnect {
 
     public Integer getPage(Long chatId) throws SQLException {
         int School = 1;
-
         Statement statement = connects().createStatement();
         ResultSet rs = statement.executeQuery("select page from btschema.users where user_id=" + chatId);
         rs.next();
@@ -74,7 +73,6 @@ public class DBConnect {
 
     public String getSchool(Long chatId) throws Exception {
         String School = "";
-
         Statement statement = connects().createStatement();
         ResultSet rs = statement.executeQuery("select user_school from btschema.users where user_id=" + chatId);
         rs.next();
@@ -140,13 +138,8 @@ public class DBConnect {
         connects().close();
     }
 
-    public void setChatId(Long chatId, Double data, String typeData) throws SQLException {
-        Statement statement = connects().createStatement();
-        statement.executeUpdate("UPDATE btschema.users set " + typeData + " = " + data + " where user_id=" + chatId);
-        statement.close();
-        connects().close();
-    }
 
+    //TODO есть мнение что 4 метода ниже идут в один, внезапно. просто еще три строки передаешь где нужные поля, таблицы, и поля для выборки
     public String getState(Long chatId) throws Exception {
         String state = "";
         Statement statement = connects().createStatement();
@@ -255,6 +248,24 @@ public class DBConnect {
         return ScheduleNew;
     }
 
+    public void deleteAccount(Long chatId) throws Exception {
+        Class.forName("org.postgresql.Driver");
+        Statement statement = connects().createStatement();
+        statement.executeUpdate("DELETE FROM btschema.users where user_id='" + chatId + "'");
+        statement.close();
+        connects().close();
+    }
+
+    //    public yourClass changeMethodName(XSSFRow rowDOTW, XSSFRow rowLesson, XSSFSheet myExcelSheet, int m, String insertTableSQL,
+//                                 Statement statement, XSSFRow rowClass, String school) {
+//        yourClass.setRowDOTW(myExcelSheet.getRow(kk.get(DOTW[m])));
+//        yourClass.setRowLesson(myExcelSheet.getRow(kk.get(DOTW[m])));
+//        addOneDay(insertTableSQL, statement, rowClass, rowLesson, rowDOTW, myExcelSheet, m, school, "_vrm");
+//        return yourClass;
+//    }
+// сделай свой класс с полями XSSFRow rowDOTW и XSSFRow rowLesson чтобы возвращать в методе нужную инфу
+// вызываешь его так yourClass = changeMethodName(rowDOTW, rowLesson, myExcelSheet, m, insertTableSQL,statement, rowClass, school);
+// выше пример метода.
     public List<String> dbAddSchedule(String file, String school) throws Exception {
         Class.forName("org.postgresql.Driver");
         Statement statement = connects().createStatement();
@@ -401,6 +412,20 @@ public class DBConnect {
             rowLesson = myExcelSheet.getRow(y);
         }
     }
+
+// TODO че это, почему тот же метод описал второй раз? отличия минимальны, я как понял одного столбца просто нету, перегрузку методов тогда используй а не просто два одинаковых пиши
+// если че перегрузка метода для примера
+//    public void overMethod(int a, int b) {
+//        a += b;
+//    }
+//    public void overMethod(int a) {
+//        overMethod(a, 10);
+//    }
+//      у тебя дубликат логики просто без значения, это насклько я понял
+//    public void overMethod(int a) {
+//        a += 10;
+//    }
+
 
     public void addOneDay(String insertTableSQL, Statement statement, XSSFRow rowClass, XSSFRow rowLesson, XSSFRow rowDOTW, XSSFSheet myExcelSheet, int dd, String school, String vrm) throws SQLException {
         int y = kk.get(DOTW[dd]), cellLess1 = 2, cellClass1 = 2, j = 2, ok = 1;
