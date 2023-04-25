@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <dataSource name="postgres@localhost">
-  <database-model serializer="dbm" dbms="POSTGRES" family-id="POSTGRES" format-version="4.45">
-    <root id="1">
-      <ServerVersion>15.2</ServerVersion>
-    </root>
+  <database-model serializer="dbm" dbms="POSTGRES" family-id="POSTGRES" format-version="4.48">
+    <root id="1"/>
     <database id="2" parent="1" name="botSchedule"/>
     <database id="3" parent="1" name="postgres">
       <Current>1</Current>

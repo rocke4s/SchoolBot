@@ -1,5 +1,6 @@
 package org.example;
 
+import org.example.config.BotConfig;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.sql.Connection;
@@ -10,15 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ShowSchedule {
+    DBConnect dbConnect;
+
     public void showSchedule(String userClass, long chatId, String school) throws Exception {
         Class.forName("org.postgresql.Driver");
-        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
-        Statement statement = connection.createStatement();
+        Statement statement = dbConnect.connects().createStatement();
         String zapros = "SELECT schedule_id, lesson_id, lesson, class, dotw " +
                 "FROM btschema.schedule where class = '" + userClass + "' and lesson <> 'null' and lesson <> ''and school='" + school + "' order by schedule_id";
         Bot bot = new Bot();
         ResultSet rs = statement.executeQuery(zapros);
-        String textForUser = "Расписание для " + userClass + ": \nПонедельник\n" + " |№ урока| Урок\n";
+        String textForUser = "Расписание для " + bot.spaceBetweenClassAndProf(userClass) + ": \nПонедельник\n" + " |№ урока| Урок\n";
         while (rs.next() && rs != null) {
             while (rs.getString("dotw").equalsIgnoreCase("ПОНЕДЕЛЬНИК") && rs != null) {
                 textForUser += "| " + rs.getString("lesson_id") + " | " +
@@ -68,15 +70,14 @@ public class ShowSchedule {
                     new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки"});
         }
         statement.close();
-        connection.close();
+        dbConnect.connects().close();
         rs.close();
     }
 
     public int getClassNumb(String school) throws Exception {
         String numbs = "";
         Class.forName("org.postgresql.Driver");
-        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
-        Statement statement = connection.createStatement();
+        Statement statement = dbConnect.connects().createStatement();
         String zapros = "SELECT Distinct class FROM btschema.schedule where class <> '' AND school='" + school + "'";
         ResultSet rs = statement.executeQuery(zapros);
         int i = 0, value = 1, value2 = 1;
@@ -89,7 +90,7 @@ public class ShowSchedule {
             value2 = value;
         }
         statement.close();
-        connection.close();
+        dbConnect.connects().close();
         rs.close();
         return value;
     }
@@ -97,8 +98,7 @@ public class ShowSchedule {
     public String[] getClassLetter(String numbClass) throws Exception {
         List<String> letss = new ArrayList<>();
         Class.forName("org.postgresql.Driver");
-        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
-        Statement statement = connection.createStatement();
+        Statement statement = dbConnect.connects().createStatement();
         String zapros = "SELECT Distinct class FROM btschema.schedule where class like '" + numbClass + "%' group by class order by class";
         ResultSet rs = statement.executeQuery(zapros);
         while (rs.next() && rs != null) {
@@ -106,7 +106,6 @@ public class ShowSchedule {
                 letss.add(rs.getString("class").replaceAll("[0-9]", ""));
             } else {
                 letss.add(rs.getString("class").replaceAll("[0-9]+[0-9]", "").substring(0, 1));
-                letss.stream().distinct();
             }
 
         }
@@ -117,7 +116,7 @@ public class ShowSchedule {
             x++;
         }
         statement.close();
-        connection.close();
+        dbConnect.connects().close();
         rs.close();
         return lets;
     }
@@ -125,8 +124,7 @@ public class ShowSchedule {
     public String[] getClassProf(String numbClass) throws Exception {
         String lets[] = new String[10];
         Class.forName("org.postgresql.Driver");
-        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
-        Statement statement = connection.createStatement();
+        Statement statement = dbConnect.connects().createStatement();
         String zapros = "SELECT Distinct class FROM btschema.schedule where class like '" + numbClass + "%' group by class order by class";
         ResultSet rs = statement.executeQuery(zapros);
         int x = 0;
@@ -136,20 +134,19 @@ public class ShowSchedule {
             x++;
         }
         statement.close();
-        connection.close();
+        dbConnect.connects().close();
         rs.close();
         return lets;
     }
 
     public String showSchedule(long chatId, String klas, String dotatw, String school) throws Exception {
         Class.forName("org.postgresql.Driver");
-        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
-        Statement statement = connection.createStatement();
+        Statement statement = dbConnect.connects().createStatement();
         String zapros = "SELECT schedule_id, lesson_id, lesson, class, dotw,school " +
                 "FROM btschema.schedule where class = '" + klas + "' and lesson <> 'null' and school='" + school + "' and lesson <> '' and dotw ='" + dotatw.toUpperCase() + "' order by schedule_id";
         Bot bot = new Bot();
         ResultSet rs = statement.executeQuery(zapros);
-        String textForUser = "Расписание для " + klas + ": \n" + " |№ урока| Урок\n";
+        String textForUser = "Расписание для " + bot.spaceBetweenClassAndProf(klas) + ": \n" + " |№ урока| Урок\n";
         while (rs.next() && rs != null) {
             textForUser += "| " + rs.getString("lesson_id") + " | " +
                     rs.getString("lesson") + "  " + "\n";
@@ -160,7 +157,7 @@ public class ShowSchedule {
 //            bot.sendText(chatId, textForUser);
 //        }
         statement.close();
-        connection.close();
+        dbConnect.connects().close();
         rs.close();
         return textForUser;
     }

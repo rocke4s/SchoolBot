@@ -5,6 +5,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.example.config.BotConfig;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,14 +14,15 @@ import java.util.List;
 import java.util.Map;
 
 public class DBConnect {
+    BotConfig botConfig;
     String[] DOTW = new String[]{"ПОНЕДЕЛЬНИК", "ВТОРНИК", "СРЕДА",
             "ЧЕТВЕРГ", "ПЯТНИЦА", "СУББОТА"};
     Map<String, Integer> kk = new HashMap<>();
     int h = 1;
     List<String> newSchedules = new ArrayList<>();
 
-    private Connection connects() throws SQLException {//общее подключение
-        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", "postgres", "poower1");
+    public Connection connects() throws SQLException {//общее подключение
+        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", botConfig.getDbUsername(), botConfig.getDbPassword());
         return connection;
     }
 
@@ -82,6 +84,40 @@ public class DBConnect {
         connects().close();
         return School;
     }
+
+    public String[] getClassProfile(Long chatId, String numberAndletterclass) throws SQLException {
+        List<String> listClassProf = new ArrayList<>();
+        Statement statement = connects().createStatement();
+        ResultSet rs = statement.executeQuery("SELECT distinct  class FROM btschema.schedule where class like '" + numberAndletterclass + "%'");
+        while (rs.next()) {
+            listClassProf.add(rs.getString("class").substring(3));
+        }
+        String[] listProf = new String[listClassProf.size()];
+        for (int x = 0; x < listClassProf.size(); x++) {
+            listProf[x] = listClassProf.get(x);
+        }
+        rs.close();
+        statement.close();
+        connects().close();
+        return listProf;
+    }
+
+//    public String[] getClassLetter(Long chatId, String numberClass) throws SQLException {
+//        List<String> listClassLetter = new ArrayList<>();
+//        Statement statement = connects().createStatement();
+//        ResultSet rs = statement.executeQuery("SELECT distinct  class FROM btschema.schedule where class like '" + numberClass + "%'");
+//        while (rs.next()) {
+//            listClassLetter.add(rs.getString("class").substring(2, 3));
+//        }
+//        String[] ClassLetters = new String[listClassLetter.size()];
+//        for (int x = 0; x < listClassLetter.size(); x++) {
+//            ClassLetters[x] = listClassLetter.get(x);
+//        }
+//        rs.close();
+//        statement.close();
+//        connects().close();
+//        return ClassLetters;
+//    }
 
     public String getSubToSchedule(Long chatId) throws Exception {
         String Sub = "";
@@ -190,6 +226,23 @@ public class DBConnect {
         ResultSet rs = statement.executeQuery("select user_selectwletter from btschema.users where user_id=" + chatId);
         if (rs.next()) {
             letter = rs.getString("user_selectwletter");
+        } else {
+            return null;
+        }
+        rs.close();
+        statement.close();
+        connects().close();
+        return letter;
+    }
+
+    public String getLetterAndNumberClass(Long chatId) throws SQLException {
+        String letter = "";
+
+        Statement statement = connects().createStatement();
+        ResultSet rs = statement.executeQuery("select user_selectwletter, user_selectclass from btschema.users where user_id=" + chatId);
+        if (rs.next()) {
+            letter = rs.getString("user_selectclass");
+            letter += rs.getString("user_selectwletter");
         } else {
             return null;
         }
