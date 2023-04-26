@@ -1,23 +1,18 @@
 package org.example;
 
-import org.example.config.BotConfig;
-import org.telegram.telegrambots.meta.api.objects.Update;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ShowSchedule {
-    DBConnect dbConnect;
+    private DBConnect dbConnect = new DBConnect();
 
     public void showSchedule(String userClass, long chatId, String school) throws Exception {
-        Class.forName("org.postgresql.Driver");
+//        Class.forName("org.postgresql.Driver");
         Statement statement = dbConnect.connects().createStatement();
         String zapros = "SELECT schedule_id, lesson_id, lesson, class, dotw " +
-                "FROM btschema.schedule where class = '" + userClass + "' and lesson <> 'null' and lesson <> ''and school='" + school + "' order by schedule_id";
+                "FROM schedule where class = '" + userClass + "' and lesson <> 'null' and lesson <> ''and school='" + school + "' order by schedule_id";
         Bot bot = new Bot();
         ResultSet rs = statement.executeQuery(zapros);
         String textForUser = "Расписание для " + bot.spaceBetweenClassAndProf(userClass) + ": \nПонедельник\n" + " |№ урока| Урок\n";
@@ -76,9 +71,9 @@ public class ShowSchedule {
 
     public int getClassNumb(String school) throws Exception {
         String numbs = "";
-        Class.forName("org.postgresql.Driver");
+
         Statement statement = dbConnect.connects().createStatement();
-        String zapros = "SELECT Distinct class FROM btschema.schedule where class <> '' AND school='" + school + "'";
+        String zapros = "SELECT Distinct class FROM schedule where class <> '' AND school='" + school + "'";
         ResultSet rs = statement.executeQuery(zapros);
         int i = 0, value = 1, value2 = 1;
         while (rs.next() && rs != null) {
@@ -97,9 +92,9 @@ public class ShowSchedule {
 
     public String[] getClassLetter(String numbClass) throws Exception {
         List<String> letss = new ArrayList<>();
-        Class.forName("org.postgresql.Driver");
+
         Statement statement = dbConnect.connects().createStatement();
-        String zapros = "SELECT Distinct class FROM btschema.schedule where class like '" + numbClass + "%' group by class order by class";
+        String zapros = "SELECT Distinct class FROM schedule where class like '" + numbClass + "%' group by class order by class";
         ResultSet rs = statement.executeQuery(zapros);
         while (rs.next() && rs != null) {
             if (Integer.parseInt(numbClass) < 10) {
@@ -123,9 +118,9 @@ public class ShowSchedule {
 
     public String[] getClassProf(String numbClass) throws Exception {
         String lets[] = new String[10];
-        Class.forName("org.postgresql.Driver");
+
         Statement statement = dbConnect.connects().createStatement();
-        String zapros = "SELECT Distinct class FROM btschema.schedule where class like '" + numbClass + "%' group by class order by class";
+        String zapros = "SELECT Distinct class FROM schedule where class like '" + numbClass + "%' group by class order by class";
         ResultSet rs = statement.executeQuery(zapros);
         int x = 0;
         while (rs.next() && rs != null) {
@@ -140,10 +135,10 @@ public class ShowSchedule {
     }
 
     public String showSchedule(long chatId, String klas, String dotatw, String school) throws Exception {
-        Class.forName("org.postgresql.Driver");
+
         Statement statement = dbConnect.connects().createStatement();
         String zapros = "SELECT schedule_id, lesson_id, lesson, class, dotw,school " +
-                "FROM btschema.schedule where class = '" + klas + "' and lesson <> 'null' and school='" + school + "' and lesson <> '' and dotw ='" + dotatw.toUpperCase() + "' order by schedule_id";
+                "FROM schedule where class = '" + klas + "' and lesson <> 'null' and school='" + school + "' and lesson <> '' and dotw ='" + dotatw.toUpperCase() + "' order by schedule_id";
         Bot bot = new Bot();
         ResultSet rs = statement.executeQuery(zapros);
         String textForUser = "Расписание для " + bot.spaceBetweenClassAndProf(klas) + ": \n" + " |№ урока| Урок\n";

@@ -1,10 +1,7 @@
 package org.example;
 
-import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.io.FileUtils;
-import org.codehaus.plexus.component.annotations.Configuration;
-import org.example.config.BotConfig;
 import org.json.JSONObject;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -25,8 +22,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Bot extends TelegramLongPollingBot {
+
     final Main main = new Main();
-    BotConfig botConfig;
+    final ConfigBot configBot = new ConfigBot();
     String txt = "";
     String[] DOTW = new String[]{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"};//TODO игде не используется, удаляем? по идеи его на 458 и 462 строке можно юзать
     String[] rangeElClas = new String[]{"1", "2", "3", "4"};
@@ -35,6 +33,7 @@ public class Bot extends TelegramLongPollingBot {
     List<String> nwSchedule = new ArrayList<>();
     private DBConnect dbConnect = new DBConnect();
     private ShowSchedule ss = new ShowSchedule();
+
 
     public void TimerTask() {
         Date date = new Date();
@@ -62,12 +61,20 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return botConfig.getBotName();
+        try {
+            return configBot.forBotAndDB()[0];
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public String getBotToken() {
-        return botConfig.getToken();
+        try {
+            return configBot.forBotAndDB()[1];
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void rangeClass(long chatId, String range, String[] rangeVal) {
@@ -98,7 +105,7 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    public void sendPhoto(Long chatId) throws SQLException {
+    public void sendPhoto(Long chatId) throws Exception {
         dbConnect.setUserData(chatId, "firstReaction", "global_state");
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId + "");

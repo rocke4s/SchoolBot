@@ -5,8 +5,8 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.example.config.BotConfig;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,22 +14,22 @@ import java.util.List;
 import java.util.Map;
 
 public class DBConnect {
-    BotConfig botConfig;
     String[] DOTW = new String[]{"ПОНЕДЕЛЬНИК", "ВТОРНИК", "СРЕДА",
             "ЧЕТВЕРГ", "ПЯТНИЦА", "СУББОТА"};
     Map<String, Integer> kk = new HashMap<>();
     int h = 1;
     List<String> newSchedules = new ArrayList<>();
+    final ConfigBot configBot = new ConfigBot();
 
-    public Connection connects() throws SQLException {//общее подключение
-        Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/botSchedule", botConfig.getDbUsername(), botConfig.getDbPassword());
+    public Connection connects() throws SQLException, IOException {//общее подключение
+        Connection connection = DriverManager.getConnection("jdbc:sqlite:botSchedule.db");
         return connection;
     }
 
-    public Integer getPage(Long chatId) throws SQLException {
+    public Integer getPage(Long chatId) throws SQLException, IOException {
         int School = 1;
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select page from btschema.users where user_id=" + chatId);
+        ResultSet rs = statement.executeQuery("select page from users where user_id=" + chatId);
         rs.next();
         School = rs.getInt("page");
         rs.close();
@@ -38,17 +38,17 @@ public class DBConnect {
         return School;
     }
 
-    public void setPage(Long chatId, int page) throws SQLException {
+    public void setPage(Long chatId, int page) throws SQLException, IOException {
         Statement statement = connects().createStatement();
-        statement.executeUpdate("UPDATE btschema.users set page = " + page + " where user_id=" + chatId);
+        statement.executeUpdate("UPDATE users set page = " + page + " where user_id=" + chatId);
         statement.close();
         connects().close();
     }
 
-    public List<String> getAllSchool() throws SQLException {
+    public List<String> getAllSchool() throws SQLException, IOException {
         List<String> masSchool = new ArrayList<>();
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select school from btschema.school");
+        ResultSet rs = statement.executeQuery("select school from school");
         while (rs.next()) {
             masSchool.add(rs.getString("school"));
         }
@@ -58,11 +58,11 @@ public class DBConnect {
         return masSchool;
     }
 
-    public List<String> getAllClass(String school) throws SQLException {
+    public List<String> getAllClass(String school) throws SQLException, IOException {
         List<String> masClass = new ArrayList<>();
         Statement statement = connects().createStatement();
         ResultSet rs = statement.executeQuery("SELECT distinct class" +
-                " from btschema.schedule" +
+                " from schedule" +
                 " where school='" + school + "' order by class");
         while (rs.next()) {
             masClass.add(rs.getString("class"));
@@ -76,7 +76,7 @@ public class DBConnect {
     public String getSchool(Long chatId) throws Exception {
         String School = "";
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select user_school from btschema.users where user_id=" + chatId);
+        ResultSet rs = statement.executeQuery("select user_school from users where user_id=" + chatId);
         rs.next();
         School = rs.getString("user_school");
         rs.close();
@@ -85,10 +85,10 @@ public class DBConnect {
         return School;
     }
 
-    public String[] getClassProfile(Long chatId, String numberAndletterclass) throws SQLException {
+    public String[] getClassProfile(Long chatId, String numberAndletterclass) throws SQLException, IOException {
         List<String> listClassProf = new ArrayList<>();
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("SELECT distinct  class FROM btschema.schedule where class like '" + numberAndletterclass + "%'");
+        ResultSet rs = statement.executeQuery("SELECT distinct  class FROM schedule where class like '" + numberAndletterclass + "%'");
         while (rs.next()) {
             listClassProf.add(rs.getString("class").substring(3));
         }
@@ -105,7 +105,7 @@ public class DBConnect {
 //    public String[] getClassLetter(Long chatId, String numberClass) throws SQLException {
 //        List<String> listClassLetter = new ArrayList<>();
 //        Statement statement = connects().createStatement();
-//        ResultSet rs = statement.executeQuery("SELECT distinct  class FROM btschema.schedule where class like '" + numberClass + "%'");
+//        ResultSet rs = statement.executeQuery("SELECT distinct  class FROM schedule where class like '" + numberClass + "%'");
 //        while (rs.next()) {
 //            listClassLetter.add(rs.getString("class").substring(2, 3));
 //        }
@@ -123,7 +123,7 @@ public class DBConnect {
         String Sub = "";
 
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select subtoschedule from btschema.users where user_id=" + chatId);
+        ResultSet rs = statement.executeQuery("select subtoschedule from  users where user_id=" + chatId);
         if (!rs.next()) {
             statement.close();
             connects().close();
@@ -138,10 +138,10 @@ public class DBConnect {
         return Sub;
     }
 
-    public List<String> getAllUsers() throws SQLException {
+    public List<String> getAllUsers() throws Exception {
         List<String> allUser = new ArrayList<>();
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select user_id from btschema.users");
+        ResultSet rs = statement.executeQuery("select user_id from users");
         while (rs.next()) {
             allUser.add(rs.getString("user_id"));
         }
@@ -151,10 +151,10 @@ public class DBConnect {
         return allUser;
     }
 
-    public List<String> getUserNewScheduleInSchool(String newScheduleSchool, String newScheduleClass) throws SQLException {
+    public List<String> getUserNewScheduleInSchool(String newScheduleSchool, String newScheduleClass) throws Exception {
         List<String> masSchool = new ArrayList<>();
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select user_id from btschema.users where user_school='" + newScheduleSchool + "' and user_class='" + newScheduleClass + "'");
+        ResultSet rs = statement.executeQuery("select user_id from users where user_school='" + newScheduleSchool + "' and user_class='" + newScheduleClass + "'");
         int x = 0;
         while (rs.next()) {
             masSchool.add(rs.getString("user_id"));
@@ -167,9 +167,9 @@ public class DBConnect {
     }
 
 
-    public void setUserData(Long chatId, String data, String typeData) throws SQLException {
+    public void setUserData(Long chatId, String data, String typeData) throws Exception {
         Statement statement = connects().createStatement();
-        statement.executeUpdate("UPDATE btschema.users set " + typeData + " = '" + data + "' where user_id=" + chatId);
+        statement.executeUpdate("UPDATE users set " + typeData + " = '" + data + "' where user_id=" + chatId);
         statement.close();
         connects().close();
     }
@@ -179,7 +179,7 @@ public class DBConnect {
     public String getState(Long chatId) throws Exception {
         String state = "";
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select user_state from btschema.users where user_id=" + chatId);
+        ResultSet rs = statement.executeQuery("select user_state from users where user_id=" + chatId);
         rs.next();
         state = rs.getString("user_state");
         rs.close();
@@ -191,7 +191,7 @@ public class DBConnect {
     public String getGlobalState(Long chatId) throws Exception {
         String state = "";
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select global_state from btschema.users where user_id=" + chatId);
+        ResultSet rs = statement.executeQuery("select global_state from users where user_id=" + chatId);
         rs.next();
         state = rs.getString("global_state");
         rs.close();
@@ -204,7 +204,7 @@ public class DBConnect {
         String user = "";
 
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select user_id from btschema.users where user_id=" + chatId);
+        ResultSet rs = statement.executeQuery("select user_id from users where user_id=" + chatId);
         if (!rs.next()) {
             statement.close();
             connects().close();
@@ -223,7 +223,7 @@ public class DBConnect {
         String letter = "";
 
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select user_selectwletter from btschema.users where user_id=" + chatId);
+        ResultSet rs = statement.executeQuery("select user_selectwletter from users where user_id=" + chatId);
         if (rs.next()) {
             letter = rs.getString("user_selectwletter");
         } else {
@@ -235,11 +235,11 @@ public class DBConnect {
         return letter;
     }
 
-    public String getLetterAndNumberClass(Long chatId) throws SQLException {
+    public String getLetterAndNumberClass(Long chatId) throws Exception {
         String letter = "";
 
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select user_selectwletter, user_selectclass from btschema.users where user_id=" + chatId);
+        ResultSet rs = statement.executeQuery("select user_selectwletter, user_selectclass from users where user_id=" + chatId);
         if (rs.next()) {
             letter = rs.getString("user_selectclass");
             letter += rs.getString("user_selectwletter");
@@ -256,7 +256,7 @@ public class DBConnect {
         String clas = "";
 
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select user_class from btschema.users where user_id=" + chatId);
+        ResultSet rs = statement.executeQuery("select user_class from users where user_id=" + chatId);
         rs.next();
         clas = rs.getString("user_class");
         rs.close();
@@ -269,7 +269,7 @@ public class DBConnect {
         String selectclas = "";
 
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select user_selectclass, user_selectwletter from btschema.users where user_id=" + chatId);
+        ResultSet rs = statement.executeQuery("select user_selectclass, user_selectwletter from users where user_id=" + chatId);
         rs.next();
         selectclas = rs.getString("user_selectclass");
         rs.close();
@@ -281,16 +281,16 @@ public class DBConnect {
     public void createUser(Long chatId) throws Exception {
 
         Statement statement = connects().createStatement();
-        statement.executeUpdate("INSERT INTO btschema.users (user_id, user_state, user_selectclass, user_selectwletter) values ("
+        statement.executeUpdate("INSERT INTO users (user_id, user_state, user_selectclass, user_selectwletter) values ("
                 + chatId + ", 'create','','')");
         statement.close();
         connects().close();
     }
 
-    public List<String> getNewScheduleFromSchool(String school) throws SQLException {
+    public List<String> getNewScheduleFromSchool(String school) throws Exception {
         List<String> ScheduleNew = new ArrayList<>();
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("Select lesson_id,lesson,class,dotw, school from btschema.schedule_vrm except Select lesson_id,lesson,class,dotw, school from btschema.schedule where school='" + school + "'");
+        ResultSet rs = statement.executeQuery("Select lesson_id,lesson,class,dotw, school from schedule_vrm except Select lesson_id,lesson,class,dotw, school from schedule where school='" + school + "'");
         while (rs.next()) {
             ScheduleNew.add("{" + rs.getString("class") + " в " + rs.getString("dotw") +
                     "} урок - (№" + rs.getString("lesson_id") + " : " + rs.getString("lesson") + ")");
@@ -302,9 +302,9 @@ public class DBConnect {
     }
 
     public void deleteAccount(Long chatId) throws Exception {
-        Class.forName("org.postgresql.Driver");
+
         Statement statement = connects().createStatement();
-        statement.executeUpdate("DELETE FROM btschema.users where user_id='" + chatId + "'");
+        statement.executeUpdate("DELETE FROM users where user_id='" + chatId + "'");
         statement.close();
         connects().close();
     }
@@ -320,7 +320,7 @@ public class DBConnect {
 // вызываешь его так yourClass = changeMethodName(rowDOTW, rowLesson, myExcelSheet, m, insertTableSQL,statement, rowClass, school);
 // выше пример метода.
     public List<String> dbAddSchedule(String file, String school) throws Exception {
-        Class.forName("org.postgresql.Driver");
+
         Statement statement = connects().createStatement();
         System.out.println(file);
         XSSFWorkbook myExcelBook = new XSSFWorkbook(file);
@@ -347,13 +347,13 @@ public class DBConnect {
                 addOneDay(insertTableSQL, statement, rowClass, rowClassw, rowLesson, rowDOTW, myExcelSheet, m, school, "_vrm");
             }
         }
-        statement.executeUpdate("DELETE FROM btschema.schedule_vrm where lesson=''");
+        statement.executeUpdate("DELETE FROM schedule_vrm where lesson=''");
         //newSchedules = getNewScheduleFromSchool(school);
         myExcelSheet = myExcelBook.getSheetAt(0);
         findNumberDOTW(myExcelSheet);
         rowLesson = myExcelSheet.getRow(kk.get(DOTW[0]));
         rowClass = myExcelSheet.getRow(kk.get(DOTW[0]) - 1);
-        statement.executeUpdate("DELETE FROM btschema.schedule where school='" + school + "'");
+        statement.executeUpdate("DELETE FROM schedule where school='" + school + "'");
         for (int m = 0; m < 6; m++) {
             rowDOTW = myExcelSheet.getRow(kk.get(DOTW[m]));
             rowLesson = myExcelSheet.getRow(kk.get(DOTW[m]));
@@ -369,8 +369,8 @@ public class DBConnect {
                 addOneDay(insertTableSQL, statement, rowClass, rowClassw, rowLesson, rowDOTW, myExcelSheet, m, school, "");
             }
         }
-        statement.executeUpdate("DELETE FROM btschema.schedule_vrm");
-        statement.executeUpdate("DELETE FROM btschema.schedule where lesson=''");
+        statement.executeUpdate("DELETE FROM schedule_vrm");
+        statement.executeUpdate("DELETE FROM schedule where lesson=''");
 
 
         statement.close();
@@ -420,7 +420,7 @@ public class DBConnect {
                         Cell cellClassw = rowClassw.getCell(cellClassw1);
                         Cell cellDOTW = rowDOTW.getCell(0);
 
-                        insertTableSQL = "INSERT INTO btschema.schedule" + vrm + " (SCHEDULE_ID, LESSON_ID, LESSON, CLASS, DOTW,school) " +
+                        insertTableSQL = "INSERT INTO schedule" + vrm + " (SCHEDULE_ID, LESSON_ID, LESSON, CLASS, DOTW,school) " +
                                 "VALUES" + "(" + h + "," + ok + ", '"
                                 + cellLess + "', '"
                                 + cellClass + "" + cellClassw + "', '"
@@ -442,7 +442,7 @@ public class DBConnect {
                         Cell cellClassw = rowClassw.getCell(cellClassw1);
                         Cell cellDOTW = rowDOTW.getCell(0);
 
-                        insertTableSQL = "INSERT INTO btschema.schedule" + vrm + " (SCHEDULE_ID, LESSON_ID, LESSON, CLASS, DOTW,school) " +
+                        insertTableSQL = "INSERT INTO schedule" + vrm + " (SCHEDULE_ID, LESSON_ID, LESSON, CLASS, DOTW,school) " +
                                 "VALUES" + "(" + h + "," + ok + ", '"
                                 + cellLess + "', '"
                                 + cellClass + "" + cellClassw + "', '"
@@ -491,7 +491,7 @@ public class DBConnect {
                         Cell cellClass = rowClass.getCell(cellClass1);//получаем значение ячейки класса
                         Cell cellDOTW = rowDOTW.getCell(0);
 
-                        insertTableSQL = "INSERT INTO btschema.schedule" + vrm + " (SCHEDULE_ID, LESSON_ID, LESSON, CLASS, DOTW,school) " +
+                        insertTableSQL = "INSERT INTO schedule" + vrm + " (SCHEDULE_ID, LESSON_ID, LESSON, CLASS, DOTW,school) " +
                                 "VALUES" + "(" + h + "," + ok + ", '"
                                 + cellLess + "', '"
                                 + cellClass + "', '"
@@ -512,7 +512,7 @@ public class DBConnect {
                         Cell cellClass = rowClass.getCell(cellClass1);
                         Cell cellDOTW = rowDOTW.getCell(0);
 
-                        insertTableSQL = "INSERT INTO btschema.schedule" + vrm + " (SCHEDULE_ID, LESSON_ID, LESSON, CLASS, DOTW,school) " +
+                        insertTableSQL = "INSERT INTO schedule" + vrm + " (SCHEDULE_ID, LESSON_ID, LESSON, CLASS, DOTW,school) " +
                                 "VALUES" + "(" + h + "," + ok + ", '"
                                 + cellLess + "', '"
                                 + cellClass + "', '"
@@ -536,11 +536,11 @@ public class DBConnect {
     }
 
 
-    public String getUserPhone(long chatId) throws SQLException {
+    public String getUserPhone(long chatId) throws Exception {
         String userPhone = "";
 
         Statement statement = connects().createStatement();
-        ResultSet rs = statement.executeQuery("select user_numberphone from btschema.users where user_id=" + chatId);
+        ResultSet rs = statement.executeQuery("select user_numberphone from users where user_id=" + chatId);
         rs.next();
         userPhone = rs.getString("user_numberphone");
         rs.close();
