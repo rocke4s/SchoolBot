@@ -1,12 +1,16 @@
 package org.example;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ShowSchedule {
     private DBConnect dbConnect = new DBConnect();
+
+    public ShowSchedule() throws SQLException {
+    }
 
     public void showSchedule(String userClass, long chatId, String school) throws Exception {
 //        Class.forName("org.postgresql.Driver");

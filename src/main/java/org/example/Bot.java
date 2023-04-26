@@ -31,8 +31,11 @@ public class Bot extends TelegramLongPollingBot {
     String[] rangeMidClas = new String[]{"5", "6", "7", "8"};
     String[] rangeHigClas = new String[]{"9", "10", "11"};
     List<String> nwSchedule = new ArrayList<>();
-    private DBConnect dbConnect = new DBConnect();
+    private final DBConnect dbConnect = new DBConnect();
     private ShowSchedule ss = new ShowSchedule();
+
+    public Bot() throws SQLException {
+    }
 
 
     public void TimerTask() {
