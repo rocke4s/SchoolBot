@@ -71,6 +71,7 @@ public class DBConnect {
         while (rs.next()) {
             masClass.add(rs.getString("class"));
         }
+        System.out.println(masClass.get(0));
         rs.close();
         statement.close();
 //       //connects().close();

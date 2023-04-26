@@ -54,10 +54,9 @@ public class ShowSchedule {
             while (rs.getString("dotw").equalsIgnoreCase("СУББОТА") && rs != null) {
                 textForUser += "| " + rs.getString("lesson_id") + " | " +
                         rs.getString("lesson") + " \n";
-                if (rs.isLast()) {
+                if (!rs.next()) {
                     break;
                 }
-                rs.next();
             }
             break;
         }

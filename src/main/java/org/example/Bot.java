@@ -123,6 +123,11 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         long chatId = update.getMessage().getChatId();
+//        try {
+//            System.out.println(dbConnect.getState(chatId) + " - " + dbConnect.getGlobalState(chatId));
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
         System.out.println(update.getMessage().getChat().getFirstName() + " - " + update.getMessage().getChat().getUserName());
         try {
             if (dbConnect.getChatId(chatId) == null) {
@@ -472,7 +477,6 @@ public class Bot extends TelegramLongPollingBot {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
     }
 
     private SendMessage initMessege(ReplyKeyboardMarkup replyKeyboardMarkup, Long who, String what) {
