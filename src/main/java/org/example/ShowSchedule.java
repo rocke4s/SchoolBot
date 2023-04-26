@@ -14,7 +14,7 @@ public class ShowSchedule {
 
     public void showSchedule(String userClass, long chatId, String school) throws Exception {
 //        Class.forName("org.postgresql.Driver");
-        Statement statement = dbConnect.connects().createStatement();
+        Statement statement = dbConnect.connection.createStatement();
         String zapros = "SELECT schedule_id, lesson_id, lesson, class, dotw " +
                 "FROM schedule where class = '" + userClass + "' and lesson <> 'null' and lesson <> ''and school='" + school + "' order by schedule_id";
         Bot bot = new Bot();
@@ -69,14 +69,14 @@ public class ShowSchedule {
                     new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки"});
         }
         statement.close();
-        dbConnect.connects().close();
+//        dbConnect.connects().close();
         rs.close();
     }
 
     public int getClassNumb(String school) throws Exception {
         String numbs = "";
 
-        Statement statement = dbConnect.connects().createStatement();
+        Statement statement = dbConnect.connection.createStatement();
         String zapros = "SELECT Distinct class FROM schedule where class <> '' AND school='" + school + "'";
         ResultSet rs = statement.executeQuery(zapros);
         int i = 0, value = 1, value2 = 1;
@@ -89,7 +89,7 @@ public class ShowSchedule {
             value2 = value;
         }
         statement.close();
-        dbConnect.connects().close();
+//        dbConnect.connection.close();
         rs.close();
         return value;
     }
@@ -97,7 +97,7 @@ public class ShowSchedule {
     public String[] getClassLetter(String numbClass) throws Exception {
         List<String> letss = new ArrayList<>();
 
-        Statement statement = dbConnect.connects().createStatement();
+        Statement statement = dbConnect.connection.createStatement();
         String zapros = "SELECT Distinct class FROM schedule where class like '" + numbClass + "%' group by class order by class";
         ResultSet rs = statement.executeQuery(zapros);
         while (rs.next() && rs != null) {
@@ -115,7 +115,7 @@ public class ShowSchedule {
             x++;
         }
         statement.close();
-        dbConnect.connects().close();
+//        dbConnect.connection.close();
         rs.close();
         return lets;
     }
@@ -123,7 +123,7 @@ public class ShowSchedule {
     public String[] getClassProf(String numbClass) throws Exception {
         String lets[] = new String[10];
 
-        Statement statement = dbConnect.connects().createStatement();
+        Statement statement = dbConnect.connection.createStatement();
         String zapros = "SELECT Distinct class FROM schedule where class like '" + numbClass + "%' group by class order by class";
         ResultSet rs = statement.executeQuery(zapros);
         int x = 0;
@@ -133,14 +133,14 @@ public class ShowSchedule {
             x++;
         }
         statement.close();
-        dbConnect.connects().close();
+//        dbConnect.connection.close();
         rs.close();
         return lets;
     }
 
     public String showSchedule(long chatId, String klas, String dotatw, String school) throws Exception {
 
-        Statement statement = dbConnect.connects().createStatement();
+        Statement statement = dbConnect.connection.createStatement();
         String zapros = "SELECT schedule_id, lesson_id, lesson, class, dotw,school " +
                 "FROM schedule where class = '" + klas + "' and lesson <> 'null' and school='" + school + "' and lesson <> '' and dotw ='" + dotatw.toUpperCase() + "' order by schedule_id";
         Bot bot = new Bot();
@@ -156,7 +156,7 @@ public class ShowSchedule {
 //            bot.sendText(chatId, textForUser);
 //        }
         statement.close();
-        dbConnect.connects().close();
+//        dbConnect.connection.close();
         rs.close();
         return textForUser;
     }
