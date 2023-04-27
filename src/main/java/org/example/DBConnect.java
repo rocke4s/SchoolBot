@@ -21,6 +21,7 @@ public class DBConnect {
     int h = 1;
     List<String> newSchedules = new ArrayList<>();
     final ConfigBot configBot = new ConfigBot();
+    final Bot bot = new Bot();
 
     public DBConnect() throws SQLException {
     }
@@ -69,7 +70,7 @@ public class DBConnect {
                 " from schedule" +
                 " where school='" + school + "' order by class");
         while (rs.next()) {
-            masClass.add(rs.getString("class"));
+            masClass.add(bot.spaceBetweenClassAndProf(rs.getString("class")));
         }
         System.out.println(masClass.get(0));
         rs.close();

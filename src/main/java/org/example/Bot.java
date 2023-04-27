@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 
 public class Bot extends TelegramLongPollingBot {
 
-    final Main main = new Main();
     final ConfigBot configBot = new ConfigBot();
     String txt = "";
     String[] DOTW = new String[]{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"};//TODO игде не используется, удаляем? по идеи его на 458 и 462 строке можно юзать
@@ -32,7 +31,7 @@ public class Bot extends TelegramLongPollingBot {
     String[] rangeHigClas = new String[]{"9", "10", "11"};
     List<String> nwSchedule = new ArrayList<>();
     private final DBConnect dbConnect = new DBConnect();
-    private ShowSchedule ss = new ShowSchedule();
+    private final ShowSchedule ss = new ShowSchedule();
 
     public Bot() throws SQLException {
     }
@@ -193,7 +192,7 @@ public class Bot extends TelegramLongPollingBot {
                                 default:
                                     for (String str : dbConnect.getAllClass(dbConnect.getSchool(chatId))) {
                                         if (update.getMessage().getText().equals(str)) {
-                                            setsUserData(chatId, "Main", "global_state", update.getMessage().getText(), "user_class");
+                                            setsUserData(chatId, "Main", "global_state", update.getMessage().getText().replaceFirst(" ", ""), "user_class");
 //                                            dbConnect.setUserData(chatId, "Main", "global_state");
 //                                            dbConnect.setUserData(chatId, update.getMessage().getText(), "user_class");
                                             sendJustMessage(chatId, "Регистрация прошла успешно!");
