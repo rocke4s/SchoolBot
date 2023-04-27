@@ -19,7 +19,7 @@ public class ShowSchedule {
                 "FROM schedule where class = '" + userClass + "' and lesson <> 'null' and lesson <> ''and school='" + school + "' order by schedule_id";
         Bot bot = new Bot();
         ResultSet rs = statement.executeQuery(zapros);
-        String textForUser = "Расписание для " + bot.spaceBetweenClassAndProf(userClass) + ": \nПонедельник\n" + " |№ урока| Урок\n";
+        String textForUser = "Расписание для " + spaceBetweenClassAndProf(userClass) + ": \nПонедельник\n" + " |№ урока| Урок\n";
         while (rs.next() && rs != null) {
             while (rs.getString("dotw").equalsIgnoreCase("ПОНЕДЕЛЬНИК") && rs != null) {
                 textForUser += "| " + rs.getString("lesson_id") + " | " +
@@ -70,6 +70,16 @@ public class ShowSchedule {
         statement.close();
 //        dbConnect.connects().close();
         rs.close();
+    }
+
+    public String spaceBetweenClassAndProf(String stroka) {
+        String strClass = stroka.substring(0, 2);
+        if (strClass.equals("11")) {
+            strClass = stroka.substring(0, 3);
+            String strProf = stroka.substring(3);
+            stroka = strClass + " " + strProf;
+        }
+        return stroka;
     }
 
     public int getClassNumb(String school) throws Exception {
@@ -144,7 +154,7 @@ public class ShowSchedule {
                 "FROM schedule where class = '" + klas + "' and lesson <> 'null' and school='" + school + "' and lesson <> '' and dotw ='" + dotatw.toUpperCase() + "' order by schedule_id";
         Bot bot = new Bot();
         ResultSet rs = statement.executeQuery(zapros);
-        String textForUser = "Расписание для " + bot.spaceBetweenClassAndProf(klas) + ": \n" + " |№ урока| Урок\n";
+        String textForUser = "Расписание для " + spaceBetweenClassAndProf(klas) + ": \n" + " |№ урока| Урок\n";
         while (rs.next() && rs != null) {
             textForUser += "| " + rs.getString("lesson_id") + " | " +
                     rs.getString("lesson") + "  " + "\n";

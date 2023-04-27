@@ -607,15 +607,6 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    public String spaceBetweenClassAndProf(String stroka) {
-        String strClass = stroka.substring(0, 2);
-        if (strClass.equals("11")) {
-            strClass = stroka.substring(0, 3);
-            String strProf = stroka.substring(3);
-            stroka = strClass + " " + strProf;
-        }
-        return stroka;
-    }
 
     public void uploadFile(Update update, long chatId) throws Exception {
         if (update.getMessage().getDocument() == null) {
