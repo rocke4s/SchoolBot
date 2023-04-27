@@ -21,7 +21,7 @@ public class DBConnect {
     int h = 1;
     List<String> newSchedules = new ArrayList<>();
     final ConfigBot configBot = new ConfigBot();
-    final Bot bot = new Bot();
+    final Bot bot = null;
 
     public DBConnect() throws SQLException {
     }
