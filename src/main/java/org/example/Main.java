@@ -14,6 +14,8 @@ public class Main {
             bot = new Bot();
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

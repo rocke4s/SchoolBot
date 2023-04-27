@@ -20,8 +20,6 @@ public class DBConnect {
     Map<String, Integer> kk = new HashMap<>();
     int h = 1;
     List<String> newSchedules = new ArrayList<>();
-    final ConfigBot configBot = new ConfigBot();
-    final ShowSchedule ss = new ShowSchedule();
 
     public DBConnect() throws SQLException {
     }
@@ -70,13 +68,23 @@ public class DBConnect {
                 " from schedule" +
                 " where school='" + school + "' order by class");
         while (rs.next()) {
-            masClass.add(ss.spaceBetweenClassAndProf(rs.getString("class")));
+            masClass.add(spaceBetweenClassAndProf(rs.getString("class")));
         }
         System.out.println(masClass.get(0));
         rs.close();
         statement.close();
 //       //connects().close();
         return masClass;
+    }
+
+    public String spaceBetweenClassAndProf(String stroka) {
+        String strClass = stroka.substring(0, 2);
+        if (strClass.equals("11")) {
+            strClass = stroka.substring(0, 3);
+            String strProf = stroka.substring(3);
+            stroka = strClass + " " + strProf;
+        }
+        return stroka;
     }
 
     public String getSchool(Long chatId) throws Exception {

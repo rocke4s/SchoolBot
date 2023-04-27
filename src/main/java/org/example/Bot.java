@@ -734,14 +734,14 @@ public class Bot extends TelegramLongPollingBot {
                             + update.getMessage().getChat().getFirstName() + ".\n"
                             + "Номер телефона: " + dbConnect.getUserPhone(chatId) + "\n"
                             + "Учебное заведение: " + dbConnect.getSchool(chatId) + "\n"
-                            + "Класс: " + dbConnect.getClass(chatId),
+                            + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId)),
                     new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки"});
         } else {
             universalMethodForSend(chatId, "Главное меню!\n" + "Пользователь, "
                             + update.getMessage().getChat().getFirstName() + ".\n"
                             + "Номер телефона: " + dbConnect.getUserPhone(chatId) + "\n"
                             + "Учебное заведение: " + dbConnect.getSchool(chatId) + "\n"
-                            + "Класс: " + dbConnect.getClass(chatId),
+                            + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId)),
                     new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки"});
         }
     }

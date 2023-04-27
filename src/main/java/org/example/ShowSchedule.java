@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ShowSchedule {
-    private DBConnect dbConnect = new DBConnect();
+    private final DBConnect dbConnect = new DBConnect();
 
     public ShowSchedule() throws SQLException {
     }
