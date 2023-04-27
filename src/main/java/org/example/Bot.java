@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
@@ -121,6 +122,7 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+
         long chatId = update.getMessage().getChatId();
 //        try {
 //            System.out.println(dbConnect.getState(chatId) + " - " + dbConnect.getGlobalState(chatId));
@@ -132,8 +134,26 @@ public class Bot extends TelegramLongPollingBot {
             if (dbConnect.getChatId(chatId) == null) {
                 dbConnect.createUser(chatId);
                 dbConnect.setUserData(chatId, "firstReaction", "global_state");
-                sendPhoto(chatId);
-                sendJustMessage(chatId, "Добро пожаловать! Отправьте свой номер через скрепку");
+                sendJustMessage(chatId, "Добро пожаловать!");
+                ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+                KeyboardButton button = new KeyboardButton();
+                List<KeyboardRow> buttons = new ArrayList<>();
+                KeyboardRow keyboardFirstRow = new KeyboardRow();
+                button.setText("Отправить контакт");
+                button.setRequestContact(true);
+                keyboardFirstRow.add(button);
+                buttons.add(keyboardFirstRow);
+                keyboard.setKeyboard(buttons);
+                SendMessage message = new SendMessage();
+                message.setChatId(update.getMessage().getChatId().toString());
+                message.setText("Нажмите на кнопку, чтобы отправить свой номер телефона\nдля регистрации");
+                message.setReplyMarkup(keyboard);
+
+                try {
+                    execute(message);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
             }
             System.out.println(update.getMessage().getText());
             if (dbConnect.getGlobalState(chatId).equals("firstReaction")) {
@@ -582,6 +602,8 @@ public class Bot extends TelegramLongPollingBot {
         KeyboardRow keyboardFirstRow = new KeyboardRow();
         KeyboardRow keyboardSecondRow = new KeyboardRow();
         KeyboardRow keyboardThreeRow = new KeyboardRow();
+        KeyboardRow kchau = new KeyboardRow();
+        keyboard.add(kchau);
         int x = 0;
         for (String str : butMas) {
             if (str.isEmpty()) {
@@ -720,8 +742,25 @@ public class Bot extends TelegramLongPollingBot {
             okNumber = true;
         } else {
             dbConnect.setUserData(chatId, "firstReaction", "global_state");
-            sendPhoto(chatId);
-            sendJustMessage(chatId, "Добро пожаловать! Отправьте свой номер через скрепку");
+            ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+            KeyboardButton button = new KeyboardButton();
+            List<KeyboardRow> buttons = new ArrayList<>();
+            KeyboardRow keyboardFirstRow = new KeyboardRow();
+            button.setText("Отправить контакт");
+            button.setRequestContact(true);
+            keyboardFirstRow.add(button);
+            buttons.add(keyboardFirstRow);
+            keyboard.setKeyboard(buttons);
+            SendMessage message = new SendMessage();
+            message.setChatId(chatId.toString());
+            message.setText("Нажмите на кнопку, чтобы отправить свой номер телефона\nдля регистрации");
+            message.setReplyMarkup(keyboard);
+
+            try {
+                execute(message);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
             System.out.println("Ошибка формата номера телефона!");
             okNumber = false;
         }

@@ -20,6 +20,7 @@ public class DBConnect {
     Map<String, Integer> kk = new HashMap<>();
     int h = 1;
     List<String> newSchedules = new ArrayList<>();
+    final ConfigBot configBot = new ConfigBot();
 
     public DBConnect() throws SQLException {
     }
