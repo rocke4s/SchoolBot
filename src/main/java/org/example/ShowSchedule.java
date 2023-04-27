@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ShowSchedule {
     private final DBConnect dbConnect = new DBConnect();
@@ -105,7 +106,6 @@ public class ShowSchedule {
 
     public String[] getClassLetter(String numbClass) throws Exception {
         List<String> letss = new ArrayList<>();
-
         Statement statement = dbConnect.connection.createStatement();
         String zapros = "SELECT Distinct class FROM schedule where class like '" + numbClass + "%' group by class order by class";
         ResultSet rs = statement.executeQuery(zapros);
@@ -113,13 +113,17 @@ public class ShowSchedule {
             if (Integer.parseInt(numbClass) < 10) {
                 letss.add(rs.getString("class").replaceAll("[0-9]", ""));
             } else {
-                letss.add(rs.getString("class").replaceAll("[0-9]+[0-9]", "").substring(0, 1));
+                letss.add(rs.getString("class").replaceAll("\\d{2}[A-Za-z]{1}", "").substring(2, 3));
             }
 
         }
+        List<String> lessClass = letss.stream()
+                .collect(Collectors.toSet())
+                .stream()
+                .collect(Collectors.toList());
         int x = 0;
-        String lets[] = new String[letss.size()];
-        for (String temp : letss) {
+        String lets[] = new String[lessClass.size()];
+        for (String temp : lessClass) {
             lets[x] = temp;
             x++;
         }
