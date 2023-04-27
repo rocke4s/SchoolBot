@@ -122,7 +122,6 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-
         long chatId = update.getMessage().getChatId();
 //        try {
 //            System.out.println(dbConnect.getState(chatId) + " - " + dbConnect.getGlobalState(chatId));
@@ -135,25 +134,7 @@ public class Bot extends TelegramLongPollingBot {
                 dbConnect.createUser(chatId);
                 dbConnect.setUserData(chatId, "firstReaction", "global_state");
                 sendJustMessage(chatId, "Добро пожаловать!");
-                ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
-                KeyboardButton button = new KeyboardButton();
-                List<KeyboardRow> buttons = new ArrayList<>();
-                KeyboardRow keyboardFirstRow = new KeyboardRow();
-                button.setText("Отправить контакт");
-                button.setRequestContact(true);
-                keyboardFirstRow.add(button);
-                buttons.add(keyboardFirstRow);
-                keyboard.setKeyboard(buttons);
-                SendMessage message = new SendMessage();
-                message.setChatId(update.getMessage().getChatId().toString());
-                message.setText("Нажмите на кнопку, чтобы отправить свой номер телефона\nдля регистрации");
-                message.setReplyMarkup(keyboard);
-
-                try {
-                    execute(message);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
+                requestNumberPhone(chatId);
             }
             System.out.println(update.getMessage().getText());
             if (dbConnect.getGlobalState(chatId).equals("firstReaction")) {
@@ -742,25 +723,7 @@ public class Bot extends TelegramLongPollingBot {
             okNumber = true;
         } else {
             dbConnect.setUserData(chatId, "firstReaction", "global_state");
-            ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
-            KeyboardButton button = new KeyboardButton();
-            List<KeyboardRow> buttons = new ArrayList<>();
-            KeyboardRow keyboardFirstRow = new KeyboardRow();
-            button.setText("Отправить контакт");
-            button.setRequestContact(true);
-            keyboardFirstRow.add(button);
-            buttons.add(keyboardFirstRow);
-            keyboard.setKeyboard(buttons);
-            SendMessage message = new SendMessage();
-            message.setChatId(chatId.toString());
-            message.setText("Нажмите на кнопку, чтобы отправить свой номер телефона\nдля регистрации");
-            message.setReplyMarkup(keyboard);
-
-            try {
-                execute(message);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
+            requestNumberPhone(chatId);
             System.out.println("Ошибка формата номера телефона!");
             okNumber = false;
         }
@@ -782,6 +745,28 @@ public class Bot extends TelegramLongPollingBot {
                             + "Учебное заведение: " + dbConnect.getSchool(chatId) + "\n"
                             + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId)),
                     new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки"});
+        }
+    }
+
+    public void requestNumberPhone(Long chatId) {
+        ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+        KeyboardButton button = new KeyboardButton();
+        List<KeyboardRow> buttons = new ArrayList<>();
+        KeyboardRow keyboardFirstRow = new KeyboardRow();
+        button.setText("Отправить контакт");
+        button.setRequestContact(true);
+        keyboardFirstRow.add(button);
+        buttons.add(keyboardFirstRow);
+        keyboard.setKeyboard(buttons);
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId.toString());
+        message.setText("Нажмите на кнопку, чтобы отправить свой номер телефона\nдля регистрации");
+        message.setReplyMarkup(keyboard);
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
     }
 }
