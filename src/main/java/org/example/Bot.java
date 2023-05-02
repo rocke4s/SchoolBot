@@ -452,6 +452,9 @@ public class Bot extends TelegramLongPollingBot {
                                 Date date = new Date();
                                 String tomorrow = DayOfWeek.byDayOfWeek(date.getDay() + 1);
                                 String tomorrow2 = DayOfWeek.byDayOfWeekEnds(date.getDay() + 1);
+                                if (tomorrow2.equalsIgnoreCase("Воскресенье")) {
+                                    tomorrow2 = "ПОНЕДЕЛЬНИК";
+                                }
                                 for (int s = 0; s < dbConnect.getAllUsers(statement).size(); s++) {
                                     sendJustMessage(Long.valueOf(dbConnect.getAllUsers(statement).get(s)), "Расписание на " + tomorrow2);
                                     if (AdminShedule.searchAdmin(Long.valueOf(dbConnect.getAllUsers(statement).get(s)))) {
