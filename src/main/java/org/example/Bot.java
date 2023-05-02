@@ -41,7 +41,7 @@ public class Bot extends TelegramLongPollingBot {
 
     public void TimerTask() {
         Date date = new Date();
-        try {//
+        try {
             if (date.getDay() != 0) {
                 if (date.getHours() == 11 && date.getMinutes() == 0) {
                     String tomorrow = DayOfWeek.byDayOfWeek(date.getDay() + 1);
