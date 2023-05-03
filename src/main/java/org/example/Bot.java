@@ -132,16 +132,13 @@ public class Bot extends TelegramLongPollingBot {
                 sendJustMessage(chatId, "Добро пожаловать!");
                 requestNumberPhone(chatId);
             } else if (update.getMessage().hasText()) {
-                if (update.getMessage().getText().equalsIgnoreCase("/start")) {
-                    if (dbConnect.getGlobalState(chatId, statement).equals("Main")) {
-                        userOrAdmin(chatId, update);
-                    }
-                    if (dbConnect.getGlobalState(chatId, statement).equals("regPage")) {
-                        dbConnect.setUserData(chatId, "firstReaction", "global_state", statement);
-                        sendJustMessage(chatId, "Добро пожаловать!");
-                        requestNumberPhone(chatId);
-                    }
+//                if (update.getMessage().getText().equalsIgnoreCase("/start")) {
+                if (dbConnect.getGlobalState(chatId, statement).equals("regPage") && !dbConnect.getState(chatId, statement).equals("regPage_2") && !dbConnect.getState(chatId, statement).equals("regPage_3")) {
+                    dbConnect.setUserData(chatId, "firstReaction", "global_state", statement);
+                    sendJustMessage(chatId, "Добро пожаловать!");
+                    requestNumberPhone(chatId);
                 }
+//                }
             }
             System.out.println(update.getMessage().getText());
             if (dbConnect.getGlobalState(chatId, statement).equals("firstReaction")) {
@@ -154,7 +151,7 @@ public class Bot extends TelegramLongPollingBot {
                         if (update.getMessage().getContact() != null &&
                                 verificationNumberPhone(update.getMessage().getContact().getPhoneNumber().toString(), chatId)) {
                             setsUserData(chatId, update.getMessage().getContact().getPhoneNumber().toString(), "user_numberphone", "regPage_2", "user_state");
-                            sendSchoolInCity(chatId, "Выберите школу:", 1);
+                            sendSchoolInCity(chatId, "Выберите школу: \n##########################\nКнопки для выбора под чатом\n##########################", 1);
                             dbConnect.setPage(chatId, 1, statement);
                         }
                         break;
@@ -163,12 +160,12 @@ public class Bot extends TelegramLongPollingBot {
                             case "->":
                                 dbConnect.setUserData(chatId, "regPage_2", "user_state", statement);
                                 dbConnect.setPage(chatId, dbConnect.getPage(chatId, statement) + 1, statement);
-                                sendSchoolInCity(chatId, "Выберите школу:", dbConnect.getPage(chatId, statement));
+                                sendSchoolInCity(chatId, "Выберите школу: \n##########################\nКнопки для выбора под чатом\n##########################", dbConnect.getPage(chatId, statement));
                                 break;
                             case "<-":
                                 dbConnect.setUserData(chatId, "regPage_2", "user_state", statement);
                                 dbConnect.setPage(chatId, dbConnect.getPage(chatId, statement) - 1, statement);
-                                sendSchoolInCity(chatId, "Выберите школу:", dbConnect.getPage(chatId, statement));
+                                sendSchoolInCity(chatId, "Выберите школу: \n##########################\nКнопки для выбора под чатом\n##########################", dbConnect.getPage(chatId, statement));
                                 break;
                             default:
                                 for (String str : dbConnect.getAllSchool(statement)) {
@@ -176,6 +173,11 @@ public class Bot extends TelegramLongPollingBot {
                                         dbConnect.setUserData(chatId, "regPage_3", "user_state", statement);
                                         sendClassInSchool(chatId, "Выберите класс:", 1, update.getMessage().getText());
                                         dbConnect.setUserData(chatId, update.getMessage().getText(), "user_school", statement);
+                                        dbConnect.setPage(chatId, 1, statement);
+                                        break;
+                                    } else {
+                                        dbConnect.setUserData(chatId, "regPage_2", "user_state", statement);
+                                        sendSchoolInCity(chatId, "Выберите школу: \n##########################\nКнопки для выбора под чатом\n##########################", 1);
                                         dbConnect.setPage(chatId, 1, statement);
                                         break;
                                     }
@@ -203,10 +205,15 @@ public class Bot extends TelegramLongPollingBot {
                                             setsUserData(chatId, "Main", "global_state", update.getMessage().getText().replaceFirst(" ", ""), "user_class");
 //                                            dbConnect.setUserData(chatId, "Main", "global_state");
 //                                            dbConnect.setUserData(chatId, update.getMessage().getText(), "user_class");
+                                            dbConnect.setUserData(chatId, "after_regPage", "user_state", statement);
                                             sendJustMessage(chatId, "Регистрация прошла успешно!");
                                             userOrAdmin(chatId, update);
                                             break;
                                         }
+                                    }
+                                    if (dbConnect.getClass(chatId, statement) == null) {
+                                        dbConnect.setUserData(chatId, "regPage_3", "user_state", statement);
+                                        sendClassInSchool(chatId, "Выберите класс:", 1, dbConnect.getSchool(chatId, statement));
                                     }
                                     break;
                             }
@@ -251,25 +258,25 @@ public class Bot extends TelegramLongPollingBot {
                         universalMethodForSend(chatId, "Расписание на всю неделю или на день?", new String[]{"Неделя", "День", "Вернуться"});
                     }
 
-                    if (DayOfWeek.searchDayOfWeek(messageText)) {
-                        try {
-                            System.out.println(messageText);
-                            if (dbConnect.getState(chatId, statement).equals("SELECT-DAY-2")) {
-                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getClass(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
-                                dbConnect.setUserData(chatId, "default", "user_state", statement);
-                                userOrAdmin(chatId, update);
-                            } else {
-                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getSelectClass(chatId, statement) + dbConnect.getLetter(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
-// TODO в данном случае у нас три  раза setUserData, если два раза вызвать меняя последний параметр будет работать так же?
-                                dbConnect.setUserData(chatId, "default", "user_state", statement);
-                                dbConnect.setUserData(chatId, "", "user_selectclass", statement);
-                                dbConnect.setUserData(chatId, "", "user_selectwletter", statement);
-                                userOrAdmin(chatId, update);
-                            }
-                        } catch (SQLException e) {
-                            System.out.println(e);
-                        }
-                    }
+//                    if (DayOfWeek.searchDayOfWeek(messageText)) {
+//                        try {
+//                            System.out.println(messageText);
+//                            if (dbConnect.getState(chatId, statement).equals("SELECT-DAY-2")) {
+//                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getClass(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
+//                                dbConnect.setUserData(chatId, "default", "user_state", statement);
+//                                userOrAdmin(chatId, update);
+//                            } else {
+//                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getSelectClass(chatId, statement) + dbConnect.getLetter(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
+//// TODO в данном случае у нас три  раза setUserData, если два раза вызвать меняя последний параметр будет работать так же?
+//                                dbConnect.setUserData(chatId, "default", "user_state", statement);
+//                                dbConnect.setUserData(chatId, "", "user_selectclass", statement);
+//                                dbConnect.setUserData(chatId, "", "user_selectwletter", statement);
+//                                userOrAdmin(chatId, update);
+//                            }
+//                        } catch (SQLException e) {
+//                            System.out.println(e);
+//                        }
+//                    }
                     switch (messageText) {
                         case "Добавить расписание":
                             if (AdminShedule.searchAdmin(chatId)) {// TODO протестить, не уверен что верно поиск сделал
@@ -316,6 +323,10 @@ public class Bot extends TelegramLongPollingBot {
                                 changeStateSub(chatId, "false", update, "Подписка отозвана!");
                             }
                             break;
+                        case "Долг питания":
+                            int dolg = (int) (1 + Math.random() * 20000);
+                            sendJustMessage(chatId, "Ваш задолженность \n составляет: " + dolg + " рублей.");
+                            userOrAdmin(chatId, update);
                         case "Неделя":
                             try {
                                 if (dbConnect.getState(chatId, statement).equals("vibor-svoi")) {
@@ -397,13 +408,35 @@ public class Bot extends TelegramLongPollingBot {
                             }
                             break;
                         default:
-                            try {
-                                dbConnect.setUserData(chatId, "default", "user_state", statement);
-//                                    sendText(chatId, "Я не понимаю..");
-                            } catch (Exception e) {
-                                System.out.println(e);
+                            if (!dbConnect.getState(chatId, statement).equals("SELECT-DAY-2") && !dbConnect.getState(chatId, statement).equals("after_regPage")
+                                    && dbConnect.getState(chatId, statement).equals("1-4") && dbConnect.getState(chatId, statement).equals("5-8") && dbConnect.getState(chatId, statement).equals("9-11")) {
+                                try {
+                                    dbConnect.setUserData(chatId, "default", "user_state", statement);
+                                    userOrAdmin(chatId, update);
+                                } catch (Exception e) {
+                                    System.out.println(e);
+                                }
                             }
                             break;
+                    }
+                    if (DayOfWeek.searchDayOfWeek(messageText)) {
+                        try {
+                            System.out.println(messageText);
+                            if (dbConnect.getState(chatId, statement).equals("SELECT-DAY-2")) {
+                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getClass(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
+                                dbConnect.setUserData(chatId, "default", "user_state", statement);
+                                userOrAdmin(chatId, update);
+                            } else {
+                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getSelectClass(chatId, statement) + dbConnect.getLetter(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
+// TODO в данном случае у нас три  раза setUserData, если два раза вызвать меняя последний параметр будет работать так же?
+                                dbConnect.setUserData(chatId, "default", "user_state", statement);
+                                dbConnect.setUserData(chatId, "", "user_selectclass", statement);
+                                dbConnect.setUserData(chatId, "", "user_selectwletter", statement);
+                                userOrAdmin(chatId, update);
+                            }
+                        } catch (SQLException e) {
+                            System.out.println(e);
+                        }
                     }
                 } catch (Exception e) {
                     System.out.println(e);
@@ -739,15 +772,17 @@ public class Bot extends TelegramLongPollingBot {
                             + update.getMessage().getChat().getFirstName() + ".\n"
                             + "Номер телефона: " + dbConnect.getUserPhone(chatId, statement) + "\n"
                             + "Учебное заведение: " + dbConnect.getSchool(chatId, statement) + "\n"
-                            + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId, statement)),
-                    new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки"});
+                            + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId, statement) + "\n################################\n" +
+                            "!Пользуйтесь кнопками под чатом!\n################################"),
+                    new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки", "Долг питания"});
         } else {
             universalMethodForSend(chatId, "Главное меню!\n" + "Пользователь, "
                             + update.getMessage().getChat().getFirstName() + ".\n"
                             + "Номер телефона: " + dbConnect.getUserPhone(chatId, statement) + "\n"
                             + "Учебное заведение: " + dbConnect.getSchool(chatId, statement) + "\n"
-                            + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId, statement)),
-                    new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки"});
+                            + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId, statement) + "\n################################\n" +
+                            "!Пользуйтесь кнопками под чатом!\n################################"),
+                    new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки", "Долг питания"});
         }
     }
 
@@ -764,7 +799,8 @@ public class Bot extends TelegramLongPollingBot {
         keyboard.setResizeKeyboard(true);
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Нажмите на кнопку, чтобы отправить свой номер телефона\nдля регистрации");
+        message.setText("Нажмите на кнопку, чтобы отправить свой номер телефона\nдля регистрации" + "\n################################\n" +
+                "!Кнопка находится под чатом!\n################################");
         message.setReplyMarkup(keyboard);
 
         try {
