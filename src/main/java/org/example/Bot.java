@@ -125,6 +125,13 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         long chatId = update.getMessage().getChatId();
+//        try {
+//            dbConnect.setUserData(chatId, "Main", "global_state", statement);
+//            dbConnect.setUserData(chatId, "default", "user_state", statement);
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+
         System.out.println(update.getMessage().getChat().getFirstName() + " - " + update.getMessage().getChat().getUserName());
         try {
             if (dbConnect.getChatId(chatId, statement) == null) {
@@ -284,9 +291,8 @@ public class Bot extends TelegramLongPollingBot {
 
                     switch (messageText) {
                         case "Добавить расписание":
-                            if (AdminShedule.searchAdmin(chatId)) {// TODO протестить, не уверен что верно поиск сделал
+                            if (AdminShedule.searchAdmin(chatId)) {
                                 setsUserData(chatId, "addSchedulePage", "global_state", "addSchedulePage", "user_state");
-                                universalMethodForSend(chatId, "Выберите школу для добавления расписания", new String[]{"Гимназия №2"});
                             }
                             break;
                         case "Узнать свое расписание":
@@ -489,18 +495,24 @@ public class Bot extends TelegramLongPollingBot {
         }
         try {
             if (dbConnect.getGlobalState(chatId, statement).equals("addSchedulePage")) {
+                System.out.println(dbConnect.getState(chatId, statement));
                 for (int i = 0; i < dbConnect.getAllSchool(statement).size(); i++) {
-                    if (dbConnect.getAllSchool(statement).get(i).equals(update.getMessage().getText())) {
-                        dbConnect.setUserData(chatId, "addSchedulePage2", "user_state", statement);
-                        universalMethodForSend(chatId, "Отправьте файл формата Excel", new String[]{"Вернуться"});
-                        System.out.println(update.getMessage().getText());
+                    if (AdminShedule.searchAdmin(chatId) && dbConnect.getState(chatId, statement).equals("addSchedulePage3")) {
+                        dbConnect.setUserData(chatId, "addSchedulePage3", "user_state", statement);
+                    }
+                    if (dbConnect.getAllSchool(statement).get(i).equals(update.getMessage().getText()) && dbConnect.getState(chatId, statement).equals("addSchedulePage")
+                            && !dbConnect.getState(chatId, statement).equals("addSchedulePage3")) {
+                        dbConnect.setUserData(chatId, "addSchedulePage3", "user_state", statement);
                         break;
                     } else {
-                        System.out.println("Ожидание выбора!");
+                        if (!dbConnect.getState(chatId, statement).equals("addSchedulePage3")) {
+                            universalMethodForSend(chatId, "Выберите школу для добавления расписания", new String[]{"Гимназия №2"});
+
+                        }
                     }
                 }
                 try {
-                    if (dbConnect.getState(chatId, statement).equals("addSchedulePage2")) {
+                    if (dbConnect.getState(chatId, statement).equals("addSchedulePage3")) {
                         if (update.getMessage().hasText() && update.getMessage().getText().equals("Вернуться")) {
                             userOrAdmin(chatId);
                             setsUserData(chatId, "default", "user_state", "Main", "global_state");
@@ -536,13 +548,13 @@ public class Bot extends TelegramLongPollingBot {
                                                 ss.showSchedule(Long.valueOf(dbConnect.getAllUsers(statement).get(s)),
                                                         dbConnect.getClass(Long.valueOf(dbConnect.getAllUsers(statement).get(s)), statement),
                                                         tomorrow, dbConnect.getSchool(Long.valueOf(dbConnect.getAllUsers(statement).get(s)), statement), statement),
-                                                new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки"});
+                                                new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки", "Долг питания"});
                                     } else {
                                         universalMethodForSend(Long.valueOf(dbConnect.getAllUsers(statement).get(s)),
                                                 ss.showSchedule(Long.valueOf(dbConnect.getAllUsers(statement).get(s)),
                                                         dbConnect.getClass(Long.valueOf(dbConnect.getAllUsers(statement).get(s)), statement),
                                                         tomorrow, dbConnect.getSchool(Long.valueOf(dbConnect.getAllUsers(statement).get(s)), statement), statement),
-                                                new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки"});
+                                                new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки", "Долг питания"});
                                     }
                                 }
                             }
@@ -691,6 +703,8 @@ public class Bot extends TelegramLongPollingBot {
 
     public void uploadFile(Update update, long chatId) throws Exception {
         if (update.getMessage().getDocument() == null) {
+            dbConnect.setUserData(chatId, "addSchedulePage3", "user_state", statement);
+            universalMethodForSend(chatId, "Отправьте файл формата Excel", new String[]{"Вернуться"});
             System.out.println("файл не отправлен!");
         } else {
             var file_name = update.getMessage().getDocument().getFileName();
@@ -698,7 +712,7 @@ public class Bot extends TelegramLongPollingBot {
             StringUtils.right(file_name, 4);
             if (StringUtils.right(file_name, 4).equals(".xml") || StringUtils.right(file_name, 5).equals(".xlsx")) {
                 var file_id = update.getMessage().getDocument().getFileId();
-                URL url = new URL("https://api.telegram.org/bot" + "6094737832:AAFvZf3Jsh9aBXN9tJPnyNX7S5lUSq_ru5c" + "/getFile?file_id=" + file_id);
+                URL url = new URL("https://api.telegram.org/bot" + getBotToken() + "/getFile?file_id=" + file_id);
                 BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
                 String res = in.readLine();
                 JSONObject jresult = new JSONObject(res);
@@ -707,14 +721,14 @@ public class Bot extends TelegramLongPollingBot {
                 System.out.println("Start upload");
                 File localFile = new File(file_name);
                 txt = file_name;
-                InputStream is = new URL("https://api.telegram.org/file/bot" + "6094737832:AAFvZf3Jsh9aBXN9tJPnyNX7S5lUSq_ru5c" + "/" + file_path).openStream();
+                InputStream is = new URL("https://api.telegram.org/file/bot" + getBotToken() + "/" + file_path).openStream();
                 FileUtils.copyInputStreamToFile(is, localFile);
                 in.close();
                 is.close();
                 System.out.println("Uploaded!");
             } else {
                 universalMethodForSend(chatId, "Нужен файл в формате эксель",
-                        new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки"});
+                        new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки"});
             }
         }
     }
