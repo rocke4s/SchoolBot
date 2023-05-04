@@ -43,7 +43,7 @@ public class Bot extends TelegramLongPollingBot {
         Date date = new Date();
         try {
             if (date.getDay() != 0) {
-                if (date.getHours() == 11 && date.getMinutes() == 0) {
+                if (date.getHours() == 16 && date.getMinutes() == 12) {
                     String tomorrow = DayOfWeek.byDayOfWeek(date.getDay() + 1);
                     String tomorrowEnd = DayOfWeek.byDayOfWeekEnds(date.getDay() + 1);
                     String schoolar = "", classar = "";
@@ -54,6 +54,7 @@ public class Bot extends TelegramLongPollingBot {
                             classar = dbConnect.getClass(Long.valueOf(dbConnect.getAllUsers(statement).get(x)), statement);
                             sendJustMessage(Long.valueOf(dbConnect.getAllUsers(statement).get(x)), "Расписание на " + tomorrowEnd);
                             showSheduleEveryDay(tomorrow, schoolar, classar, Long.valueOf(dbConnect.getAllUsers(statement).get(x)));
+                            userOrAdmin(Long.valueOf(dbConnect.getAllUsers(statement).get(x)));
                         }
                     }
                 }
@@ -81,9 +82,9 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    public void rangeClass(long chatId, String range, String[] rangeVal) {
+    public void rangeClass(long chatId, String range, String[] rangeVal, String one) {
         try {
-            dbConnect.setUserData(chatId, range, "user_state", statement);
+            dbConnect.setUserData(chatId, range + one, "user_state", statement);
             universalMethodForSend(chatId, "Выберите номер класса:", rangeVal);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -94,7 +95,7 @@ public class Bot extends TelegramLongPollingBot {
         try {
             sendJustMessage(chatId, messegeChanges);
             setsUserData(chatId, bool, "subtoschedule", "default", "user_state");
-            userOrAdmin(chatId, update);
+            userOrAdmin(chatId);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -207,7 +208,7 @@ public class Bot extends TelegramLongPollingBot {
 //                                            dbConnect.setUserData(chatId, update.getMessage().getText(), "user_class");
                                             dbConnect.setUserData(chatId, "after_regPage", "user_state", statement);
                                             sendJustMessage(chatId, "Регистрация прошла успешно!");
-                                            userOrAdmin(chatId, update);
+                                            userOrAdmin(chatId);
                                             break;
                                         }
                                     }
@@ -227,56 +228,60 @@ public class Bot extends TelegramLongPollingBot {
                         System.out.println("test");
                     }
                     String messageText = update.getMessage().getText();
+                    System.out.println(dbConnect.getState(chatId, statement));
+
+
                     if (messageText.equals("1-4") || messageText.equals("5-8") || messageText.equals("9-11")) {
                         if (messageText.equals("1-4")) {
-                            rangeClass(chatId, messageText, rangeElClas);
+                            rangeClass(chatId, messageText, rangeElClas, "1");
                         } else if (messageText.equals("5-8")) {
-                            rangeClass(chatId, messageText, rangeMidClas);
+                            rangeClass(chatId, messageText, rangeMidClas, "1");
                         } else if (messageText.equals("9-11")) {
-                            rangeClass(chatId, messageText, rangeHigClas);
+                            rangeClass(chatId, messageText, rangeHigClas, "1");
                         }
+
                     }
 
                     if (Classes.searchClass(messageText)) {
-                        setsUserData(chatId, "SELECT-NUMBER", "user_state", messageText, "user_selectclass");
+                        setsUserData(chatId, "SELECT-NUMBER1", "user_state", messageText, "user_selectclass");
                         universalMethodForSend(chatId, "Выберите букву класса:", ss.getClassLetter(messageText, statement));
+
                     }
 
                     if (SubClasses.searchSubClasses(messageText)) {
                         if (!dbConnect.getSelectClass(chatId, statement).equals("11")) {
-                            setsUserData(chatId, "SELECT-LETTER", "user_state", messageText, "user_selectwletter");
+                            setsUserData(chatId, "SELECT-LETTER1", "user_state", messageText, "user_selectwletter");
                             universalMethodForSend(chatId, "Расписание на всю неделю или на день?", new String[]{"Неделя", "День", "Вернуться"});
 
                         } else {
-                            setsUserData(chatId, "SELECT-PROF", "user_state", messageText, "user_selectwletter");
-                            universalMethodForSend(chatId, "Выберите профиль:", dbConnect.getClassProfile(chatId, dbConnect.getLetterAndNumberClass(chatId, statement), statement));//todo нужно достать профили с базы
+                            setsUserData(chatId, "SELECT-PROF1", "user_state", messageText, "user_selectwletter");
+                            universalMethodForSend(chatId, "Выберите профиль:", dbConnect.getClassProfile(chatId, dbConnect.getLetterAndNumberClass(chatId, statement), statement));
                         }
                     }
 
                     if (DirectionClasses.searchDirectionClasses(messageText)) {
-                        setsUserData(chatId, "SELECT-LETTER", "user_state", dbConnect.getLetter(chatId, statement) + messageText, "user_selectwletter");
+                        setsUserData(chatId, "SELECT-PROF21", "user_state", dbConnect.getLetter(chatId, statement) + messageText, "user_selectwletter");
                         universalMethodForSend(chatId, "Расписание на всю неделю или на день?", new String[]{"Неделя", "День", "Вернуться"});
                     }
 
-//                    if (DayOfWeek.searchDayOfWeek(messageText)) {
-//                        try {
-//                            System.out.println(messageText);
-//                            if (dbConnect.getState(chatId, statement).equals("SELECT-DAY-2")) {
-//                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getClass(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
-//                                dbConnect.setUserData(chatId, "default", "user_state", statement);
-//                                userOrAdmin(chatId, update);
-//                            } else {
-//                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getSelectClass(chatId, statement) + dbConnect.getLetter(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
-//// TODO в данном случае у нас три  раза setUserData, если два раза вызвать меняя последний параметр будет работать так же?
-//                                dbConnect.setUserData(chatId, "default", "user_state", statement);
-//                                dbConnect.setUserData(chatId, "", "user_selectclass", statement);
-//                                dbConnect.setUserData(chatId, "", "user_selectwletter", statement);
-//                                userOrAdmin(chatId, update);
-//                            }
-//                        } catch (SQLException e) {
-//                            System.out.println(e);
-//                        }
-//                    }
+                    if (DayOfWeek.searchDayOfWeek(messageText)) {
+                        try {
+                            System.out.println(messageText);
+                            if (dbConnect.getState(chatId, statement).equals("SELECT-DAY-2")) {
+                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getClass(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
+
+                            } else {
+                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getSelectClass(chatId, statement) + dbConnect.getLetter(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
+                            }
+                            dbConnect.setUserData(chatId, "defaultday1", "user_state", statement);
+                            dbConnect.setUserData(chatId, "", "user_selectclass", statement);
+                            dbConnect.setUserData(chatId, "", "user_selectwletter", statement);
+                            userOrAdmin(chatId);
+                        } catch (SQLException e) {
+                            System.out.println(e);
+                        }
+                    }
+
                     switch (messageText) {
                         case "Добавить расписание":
                             if (AdminShedule.searchAdmin(chatId)) {// TODO протестить, не уверен что верно поиск сделал
@@ -326,23 +331,18 @@ public class Bot extends TelegramLongPollingBot {
                         case "Долг питания":
                             int dolg = (int) (1 + Math.random() * 20000);
                             sendJustMessage(chatId, "Ваш задолженность \n составляет: " + dolg + " рублей.");
-                            userOrAdmin(chatId, update);
+                            userOrAdmin(chatId);
                         case "Неделя":
                             try {
                                 if (dbConnect.getState(chatId, statement).equals("vibor-svoi")) {
                                     ss.showSchedule(dbConnect.getClass(chatId, statement) + dbConnect.getLetter(chatId, statement), chatId, dbConnect.getSchool(chatId, statement), statement);
-                                    userOrAdmin(chatId, update);
-                                    dbConnect.setUserData(chatId, "default", "user_state", statement);
                                 } else {
                                     ss.showSchedule(dbConnect.getSelectClass(chatId, statement) + dbConnect.getLetter(chatId, statement), chatId, dbConnect.getSchool(chatId, statement), statement);
-                                    userOrAdmin(chatId, update);
-//                                setsUserData(chatId, "default", "user_state", "", "user_selectclass");
-//                                setsUserData(chatId, "default", "user_state", "", "user_selectwletter");
-// TODO в данном случае у нас три  раза setUserData, если два раза вызвать меняя последний параметр будет работать так же?нет
-                                    dbConnect.setUserData(chatId, "default", "user_state", statement);
-                                    dbConnect.setUserData(chatId, "", "user_selectclass", statement);
-                                    dbConnect.setUserData(chatId, "", "user_selectwletter", statement);
                                 }
+                                userOrAdmin(chatId);
+                                dbConnect.setUserData(chatId, "default", "user_state", statement);
+                                dbConnect.setUserData(chatId, "", "user_selectclass", statement);
+                                dbConnect.setUserData(chatId, "", "user_selectwletter", statement);
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
@@ -350,7 +350,7 @@ public class Bot extends TelegramLongPollingBot {
                         case "Вернуться":
                             try {
                                 if (dbConnect.getState(chatId, statement).equals("subs_schedule")) {
-                                    userOrAdmin(chatId, update);
+                                    userOrAdmin(chatId);
                                     dbConnect.setUserData(chatId, "default", "user_state", statement);
                                     break;
                                 }
@@ -360,7 +360,7 @@ public class Bot extends TelegramLongPollingBot {
                                     break;
                                 }
                                 if (dbConnect.getState(chatId, statement).equals("vibor-svoi")) {
-                                    userOrAdmin(chatId, update);
+                                    userOrAdmin(chatId);
                                     dbConnect.setUserData(chatId, "default", "user_state", statement);
                                     break;
                                 }
@@ -385,7 +385,7 @@ public class Bot extends TelegramLongPollingBot {
                                     break;
                                 }
                                 if (dbConnect.getState(chatId, statement).equals("1-4") || dbConnect.getState(chatId, statement).equals("5-8") || dbConnect.getState(chatId, statement).equals("9-11")) {
-                                    userOrAdmin(chatId, update);
+                                    userOrAdmin(chatId);
                                     dbConnect.setUserData(chatId, "default", "user_state", statement);
                                     break;
                                 }
@@ -408,35 +408,76 @@ public class Bot extends TelegramLongPollingBot {
                             }
                             break;
                         default:
-                            if (!dbConnect.getState(chatId, statement).equals("SELECT-DAY-2") && !dbConnect.getState(chatId, statement).equals("after_regPage")
-                                    && dbConnect.getState(chatId, statement).equals("1-4") && dbConnect.getState(chatId, statement).equals("5-8") && dbConnect.getState(chatId, statement).equals("9-11")) {
-                                try {
+                            switch (dbConnect.getState(chatId, statement)) {
+                                case "vibor-svoi":
+                                    universalMethodForSend(chatId, "Расписание на всю неделю или на день?", new String[]{"Неделя", "День",});
+                                    break;
+                                case "vibor_1":
+                                    universalMethodForSend(chatId, "Выберите номер класса:", new String[]{"5-8", "9-11"});
+                                    dbConnect.setUserData(chatId, "vibor_1", "user_state", statement);
+                                    break;
+                                case "subs_schedule":
+                                    universalMethodForSend(chatId, "Подписка на уведомления каждый день в 16:00", new String[]{"Подписаться на уведомления", "Убрать подписку", "Удалить аккаунт", "Вернуться"});
+                                    dbConnect.setUserData(chatId, "subs_schedule", "user_state", statement);
+                                    break;
+                                case "SELECT-DAY-2":
+                                    dbConnect.setUserData(chatId, "SELECT-DAY-2", "user_state", statement);
+                                    universalMethodForSend(chatId, "Выберите день недели:", DOTW);
+                                    break;
+                                case "SELECT-DAY":
+                                    dbConnect.setUserData(chatId, "SELECT-DAY", "user_state", statement);
+                                    universalMethodForSend(chatId, "Выберите день недели:", DOTW);
+                                    break;
+                                case "1-4":
+                                    rangeClass(chatId, "1-4", rangeElClas, "");
+                                    break;
+                                case "5-8":
+                                    rangeClass(chatId, "5-8", rangeMidClas, "");
+                                    break;
+                                case "9-11":
+                                    rangeClass(chatId, "9-11", rangeHigClas, "");
+                                    break;
+                                case "1-41":
+                                    dbConnect.setUserData(chatId, "1-4", "user_state", statement);
+                                    break;
+                                case "5-81":
+                                    dbConnect.setUserData(chatId, "5-8", "user_state", statement);
+                                    break;
+                                case "9-111":
+                                    dbConnect.setUserData(chatId, "9-11", "user_state", statement);
+                                    break;
+                                case "SELECT-NUMBER":
+                                    universalMethodForSend(chatId, "Выберите букву класса:", ss.getClassLetter(messageText, statement));
+                                    break;
+                                case "SELECT-PROF":
+                                    universalMethodForSend(chatId, "Выберите профиль:", dbConnect.getClassProfile(chatId, dbConnect.getLetterAndNumberClass(chatId, statement), statement));
+                                    break;
+                                case "SELECT-NUMBER1":
+                                    setsUserData(chatId, "SELECT-NUMBER", "user_state", messageText, "user_selectclass");
+                                    break;
+                                case "SELECT-PROF1":
+                                    setsUserData(chatId, "SELECT-PROF", "user_state", messageText, "user_selectwletter");
+                                    break;
+                                case "SELECT-DAYS":
+                                    universalMethodForSend(chatId, "Расписание на всю неделю или на день?", new String[]{"Неделя", "День",});
+                                    break;
+                                case "SELECT-PROF21":
+                                    dbConnect.setUserData(chatId, "SELECT-DAYS", "user_state", statement);
+                                    break;
+                                case "SELECT-LETTER1":
+                                    dbConnect.setUserData(chatId, "SELECT-DAYS", "user_state", statement);
+                                    break;
+                                case "defaultday":
+                                    userOrAdmin(chatId);
+                                    break;
+                                case "defaultday1":
                                     dbConnect.setUserData(chatId, "default", "user_state", statement);
-                                    userOrAdmin(chatId, update);
-                                } catch (Exception e) {
-                                    System.out.println(e);
-                                }
+                                    break;
+                                default:
+                                    userOrAdmin(chatId);
+                                    break;
                             }
                             break;
-                    }
-                    if (DayOfWeek.searchDayOfWeek(messageText)) {
-                        try {
-                            System.out.println(messageText);
-                            if (dbConnect.getState(chatId, statement).equals("SELECT-DAY-2")) {
-                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getClass(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
-                                dbConnect.setUserData(chatId, "default", "user_state", statement);
-                                userOrAdmin(chatId, update);
-                            } else {
-                                sendJustMessage(chatId, ss.showSchedule(chatId, dbConnect.getSelectClass(chatId, statement) + dbConnect.getLetter(chatId, statement), update.getMessage().getText(), dbConnect.getSchool(chatId, statement), statement));
-// TODO в данном случае у нас три  раза setUserData, если два раза вызвать меняя последний параметр будет работать так же?
-                                dbConnect.setUserData(chatId, "default", "user_state", statement);
-                                dbConnect.setUserData(chatId, "", "user_selectclass", statement);
-                                dbConnect.setUserData(chatId, "", "user_selectwletter", statement);
-                                userOrAdmin(chatId, update);
-                            }
-                        } catch (SQLException e) {
-                            System.out.println(e);
-                        }
                     }
                 } catch (Exception e) {
                     System.out.println(e);
@@ -461,7 +502,7 @@ public class Bot extends TelegramLongPollingBot {
                 try {
                     if (dbConnect.getState(chatId, statement).equals("addSchedulePage2")) {
                         if (update.getMessage().hasText() && update.getMessage().getText().equals("Вернуться")) {
-                            userOrAdmin(chatId, update);
+                            userOrAdmin(chatId);
                             setsUserData(chatId, "default", "user_state", "Main", "global_state");
                         } else {
                             try {
@@ -766,18 +807,20 @@ public class Bot extends TelegramLongPollingBot {
         return okNumber;
     }
 
-    public void userOrAdmin(Long chatId, Update update) throws Exception {
+    public void userOrAdmin(Long chatId) throws Exception {
         if (chatId == 743234635 || chatId == 1188351220 || chatId == 5959939548L || chatId == 5471231917L) {
-            universalMethodForSend(chatId, "Главное меню!\n" + "Пользователь, "
-                            + update.getMessage().getChat().getFirstName() + ".\n"
+            universalMethodForSend(chatId, "Главное меню!\n"
+//                            + "Пользователь, "
+//                            + update.getMessage().getChat().getFirstName() + ".\n"
                             + "Номер телефона: " + dbConnect.getUserPhone(chatId, statement) + "\n"
                             + "Учебное заведение: " + dbConnect.getSchool(chatId, statement) + "\n"
                             + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId, statement) + "\n################################\n" +
                             "!Пользуйтесь кнопками под чатом!\n################################"),
                     new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки", "Долг питания"});
         } else {
-            universalMethodForSend(chatId, "Главное меню!\n" + "Пользователь, "
-                            + update.getMessage().getChat().getFirstName() + ".\n"
+            universalMethodForSend(chatId, "Главное меню!\n"
+//                            + "Пользователь, "
+//                            + update.getMessage().getChat().getFirstName() + ".\n"
                             + "Номер телефона: " + dbConnect.getUserPhone(chatId, statement) + "\n"
                             + "Учебное заведение: " + dbConnect.getSchool(chatId, statement) + "\n"
                             + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId, statement) + "\n################################\n" +
