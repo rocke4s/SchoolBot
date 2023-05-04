@@ -206,7 +206,7 @@ public class Bot extends TelegramLongPollingBot {
                                             setsUserData(chatId, "Main", "global_state", update.getMessage().getText().replaceFirst(" ", ""), "user_class");
 //                                            dbConnect.setUserData(chatId, "Main", "global_state");
 //                                            dbConnect.setUserData(chatId, update.getMessage().getText(), "user_class");
-                                            dbConnect.setUserData(chatId, "after_regPage", "user_state", statement);
+                                            dbConnect.setUserData(chatId, "defaultday1", "user_state", statement);
                                             sendJustMessage(chatId, "Регистрация прошла успешно!");
                                             userOrAdmin(chatId);
                                             break;
