@@ -159,7 +159,7 @@ public class Bot extends TelegramLongPollingBot {
                         if (update.getMessage().getContact() != null &&
                                 verificationNumberPhone(update.getMessage().getContact().getPhoneNumber().toString(), chatId)) {
                             setsUserData(chatId, update.getMessage().getContact().getPhoneNumber().toString(), "user_numberphone", "regPage_2", "user_state");
-                            sendSchoolInCity(chatId, "Выберите школу: \n##########################\nКнопки для выбора под чатом\n##########################", 1);
+                            sendSchoolInCity(chatId, "Выберите школу: \n# <u><b><i>Кнопки расположены под чатом</i></b></u> #", 1);
                             dbConnect.setPage(chatId, 1, statement);
                         }
                         break;
@@ -168,12 +168,12 @@ public class Bot extends TelegramLongPollingBot {
                             case "->":
                                 dbConnect.setUserData(chatId, "regPage_2", "user_state", statement);
                                 dbConnect.setPage(chatId, dbConnect.getPage(chatId, statement) + 1, statement);
-                                sendSchoolInCity(chatId, "Выберите школу: \n##########################\nКнопки для выбора под чатом\n##########################", dbConnect.getPage(chatId, statement));
+                                sendSchoolInCity(chatId, "Выберите школу: \n# <u><b><i>Кнопки расположены под чатом</i></b></u> #", dbConnect.getPage(chatId, statement));
                                 break;
                             case "<-":
                                 dbConnect.setUserData(chatId, "regPage_2", "user_state", statement);
                                 dbConnect.setPage(chatId, dbConnect.getPage(chatId, statement) - 1, statement);
-                                sendSchoolInCity(chatId, "Выберите школу: \n##########################\nКнопки для выбора под чатом\n##########################", dbConnect.getPage(chatId, statement));
+                                sendSchoolInCity(chatId, "Выберите школу: \n# <u><b><i>Кнопки расположены под чатом</i></b></u> #", dbConnect.getPage(chatId, statement));
                                 break;
                             default:
                                 for (String str : dbConnect.getAllSchool(statement)) {
@@ -185,7 +185,7 @@ public class Bot extends TelegramLongPollingBot {
                                         break;
                                     } else {
                                         dbConnect.setUserData(chatId, "regPage_2", "user_state", statement);
-                                        sendSchoolInCity(chatId, "Выберите школу: \n##########################\nКнопки для выбора под чатом\n##########################", 1);
+                                        sendSchoolInCity(chatId, "Выберите школу: + \n# <u><b><i>Кнопки расположены под чатом</i></b></u> #", 1);
                                         dbConnect.setPage(chatId, 1, statement);
                                         break;
                                     }
@@ -588,6 +588,7 @@ public class Bot extends TelegramLongPollingBot {
     public void sendSchoolInCity(Long who, String what, int page) throws Exception {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         SendMessage message = initMessege(replyKeyboardMarkup, who, what);
+        message.setParseMode("HTML");
         initReplyKeyboardMarkup(replyKeyboardMarkup);
         List<KeyboardRow> keyboard = new ArrayList<>();
         KeyboardRow keyboardFirstRow = new KeyboardRow();
@@ -668,6 +669,7 @@ public class Bot extends TelegramLongPollingBot {
     public void universalMethodForSend(Long chatId, String chatMessage, String butMas[]) {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         SendMessage message = initMessege(replyKeyboardMarkup, chatId, chatMessage);
+        message.setParseMode("HTML");
         initReplyKeyboardMarkup(replyKeyboardMarkup);
         List<KeyboardRow> keyboard = new ArrayList<>();
         KeyboardRow keyboardFirstRow = new KeyboardRow();
@@ -828,8 +830,8 @@ public class Bot extends TelegramLongPollingBot {
 //                            + update.getMessage().getChat().getFirstName() + ".\n"
                             + "Номер телефона: " + dbConnect.getUserPhone(chatId, statement) + "\n"
                             + "Учебное заведение: " + dbConnect.getSchool(chatId, statement) + "\n"
-                            + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId, statement) + "\n################################\n" +
-                            "!Пользуйтесь кнопками под чатом!\n################################"),
+                            + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId, statement)
+                            + "\n# <u><b><i>Кнопки расположены под чатом</i></b></u> #"),
                     new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки", "Долг питания"});
         } else {
             universalMethodForSend(chatId, "Главное меню!\n"
@@ -837,8 +839,8 @@ public class Bot extends TelegramLongPollingBot {
 //                            + update.getMessage().getChat().getFirstName() + ".\n"
                             + "Номер телефона: " + dbConnect.getUserPhone(chatId, statement) + "\n"
                             + "Учебное заведение: " + dbConnect.getSchool(chatId, statement) + "\n"
-                            + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId, statement) + "\n################################\n" +
-                            "!Пользуйтесь кнопками под чатом!\n################################"),
+                            + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId, statement)
+                            + "\n# <u><b><i>Кнопки расположены под чатом</i></b></u> #"),
                     new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки", "Долг питания"});
         }
     }
@@ -856,8 +858,9 @@ public class Bot extends TelegramLongPollingBot {
         keyboard.setResizeKeyboard(true);
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Нажмите на кнопку, чтобы отправить свой номер телефона\nдля регистрации" + "\n################################\n" +
-                "!Кнопка находится под чатом!\n################################");
+        message.setText("Нажмите на <u>кнопку</u>, чтобы отправить свой номер телефона\nдля регистрации\n"
+                + "# <u><b><i>Кнопка расположена под чатом</i></b></u> #");
+        message.setParseMode("HTML");
         message.setReplyMarkup(keyboard);
 
         try {
