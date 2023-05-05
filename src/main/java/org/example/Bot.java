@@ -43,7 +43,7 @@ public class Bot extends TelegramLongPollingBot {
         Date date = new Date();
         try {
             if (date.getDay() != 0) {
-                if (date.getHours() == 16 && date.getMinutes() == 12) {
+                if (date.getHours() == 11 && date.getMinutes() == 0) {
                     String tomorrow = DayOfWeek.byDayOfWeek(date.getDay() + 1);
                     String tomorrowEnd = DayOfWeek.byDayOfWeekEnds(date.getDay() + 1);
                     String schoolar = "", classar = "";
@@ -541,20 +541,15 @@ public class Bot extends TelegramLongPollingBot {
                                 if (tomorrow2.equalsIgnoreCase("Воскресенье")) {
                                     tomorrow2 = "ПОНЕДЕЛЬНИК";
                                 }
-                                for (int s = 0; s < dbConnect.getAllUsers(statement).size(); s++) {
-                                    sendJustMessage(Long.valueOf(dbConnect.getAllUsers(statement).get(s)), "Расписание на " + tomorrow2);
-                                    if (AdminShedule.searchAdmin(Long.valueOf(dbConnect.getAllUsers(statement).get(s)))) {
-                                        universalMethodForSend(Long.valueOf(dbConnect.getAllUsers(statement).get(s)),
-                                                ss.showSchedule(Long.valueOf(dbConnect.getAllUsers(statement).get(s)),
-                                                        dbConnect.getClass(Long.valueOf(dbConnect.getAllUsers(statement).get(s)), statement),
-                                                        tomorrow, dbConnect.getSchool(Long.valueOf(dbConnect.getAllUsers(statement).get(s)), statement), statement),
-                                                new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки", "Долг питания"});
-                                    } else {
-                                        universalMethodForSend(Long.valueOf(dbConnect.getAllUsers(statement).get(s)),
-                                                ss.showSchedule(Long.valueOf(dbConnect.getAllUsers(statement).get(s)),
-                                                        dbConnect.getClass(Long.valueOf(dbConnect.getAllUsers(statement).get(s)), statement),
-                                                        tomorrow, dbConnect.getSchool(Long.valueOf(dbConnect.getAllUsers(statement).get(s)), statement), statement),
-                                                new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки", "Долг питания"});
+                                String schoolar = "", classar = "";
+                                for (int x = 0; x < dbConnect.getAllUsers(statement).size(); x++) {
+                                    System.out.println(dbConnect.getSubToSchedule(Long.valueOf(dbConnect.getAllUsers(statement).get(x)), statement));
+                                    if (dbConnect.getSubToSchedule(Long.valueOf(dbConnect.getAllUsers(statement).get(x)), statement) != null && dbConnect.getSubToSchedule(Long.valueOf(dbConnect.getAllUsers(statement).get(x)), statement).equalsIgnoreCase("true")) {
+                                        schoolar = dbConnect.getSchool(Long.valueOf(dbConnect.getAllUsers(statement).get(x)), statement);
+                                        classar = dbConnect.getClass(Long.valueOf(dbConnect.getAllUsers(statement).get(x)), statement);
+                                        sendJustMessage(Long.valueOf(dbConnect.getAllUsers(statement).get(x)), "Расписание на " + tomorrow2);
+                                        showSheduleEveryDay(tomorrow, schoolar, classar, Long.valueOf(dbConnect.getAllUsers(statement).get(x)));
+                                        userOrAdmin(Long.valueOf(dbConnect.getAllUsers(statement).get(x)));
                                     }
                                 }
                             }
@@ -858,7 +853,7 @@ public class Bot extends TelegramLongPollingBot {
         keyboard.setResizeKeyboard(true);
         SendMessage message = new SendMessage();
         message.setChatId(chatId.toString());
-        message.setText("Нажмите на <u>кнопку</u>, чтобы отправить свой номер телефона\nдля регистрации\n"
+        message.setText("Нажмите на <u>кнопку</u>, чтобы отправить свой номер телефона для регистрации\n"
                 + "# <u><b><i>Кнопка расположена под чатом</i></b></u> #");
         message.setParseMode("HTML");
         message.setReplyMarkup(keyboard);
