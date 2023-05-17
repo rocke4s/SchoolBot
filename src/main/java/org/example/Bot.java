@@ -43,9 +43,17 @@ public class Bot extends TelegramLongPollingBot {
         Date date = new Date();
         try {
             if (date.getDay() != 0) {
-                if (date.getHours() == 11 && date.getMinutes() == 0) {
-                    String tomorrow = DayOfWeek.byDayOfWeek(date.getDay() + 1);
-                    String tomorrowEnd = DayOfWeek.byDayOfWeekEnds(date.getDay() + 1);
+                if (date.getHours() == 16 && date.getMinutes() == 0) {
+                    String tomorrow = "";
+                    String tomorrowEnd = "";
+                    if (date.getDay() == 6) {
+                        tomorrow = DayOfWeek.byDayOfWeek(date.getDay() - 5);
+                        tomorrowEnd = DayOfWeek.byDayOfWeekEnds(date.getDay() - 5);
+                    } else {
+                        tomorrow = DayOfWeek.byDayOfWeek(date.getDay() + 1);
+                        tomorrowEnd = DayOfWeek.byDayOfWeekEnds(date.getDay() + 1);
+                    }
+
                     String schoolar = "", classar = "";
                     for (int x = 0; x < dbConnect.getAllUsers(statement).size(); x++) {
                         System.out.println(dbConnect.getSubToSchedule(Long.valueOf(dbConnect.getAllUsers(statement).get(x)), statement));
