@@ -43,7 +43,7 @@ public class Bot extends TelegramLongPollingBot {
         Date date = new Date();
         try {
             if (date.getDay() != 0) {
-                if (date.getHours() == 16 && date.getMinutes() == 0) {
+                if (date.getHours() == 11 && date.getMinutes() == 0) {
                     String tomorrow = "";
                     String tomorrowEnd = "";
                     if (date.getDay() == 6) {
