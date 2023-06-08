@@ -1,17 +1,21 @@
 package org.example;
 
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DBConnect {
     String[] DOTW = new String[]{"ПОНЕДЕЛЬНИК", "ВТОРНИК", "СРЕДА",
@@ -252,6 +256,53 @@ public class DBConnect {
 // сделай свой класс с полями XSSFRow rowDOTW и XSSFRow rowLesson чтобы возвращать в методе нужную инфу
 // вызываешь его так yourClass = changeMethodName(rowDOTW, rowLesson, myExcelSheet, m, insertTableSQL,statement, rowClass, school);
 // выше пример метода.
+
+
+    public void dbAddDebt(String file, Statement statement) throws Exception {
+        FileInputStream fileInputStream = new FileInputStream(new File(file));
+        HSSFWorkbook myExcelBook = new HSSFWorkbook(fileInputStream);
+        HSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
+        HSSFRow rowDOTW = null;
+        String insertTableSQL = "";
+        int aIndex = -1;
+        int cIndex = -1;
+        Iterator<Row> iterator = myExcelSheet.iterator();
+        if (iterator.hasNext()) {
+            Row row = iterator.next();
+            Iterator<Cell> cellIterator = row.cellIterator();
+            while (cellIterator.hasNext() && (aIndex == -1 || cIndex == -1)) {
+                Cell cell = cellIterator.next();
+                if (cell.getStringCellValue().trim().equals("РебенокКод")) {
+                    aIndex = cell.getColumnIndex();
+                }
+                if (cell.getStringCellValue().trim().equals("СуммаОстатокДт")) {
+                    cIndex = cell.getColumnIndex();
+                }
+            }
+        }
+        List<String> aList = new ArrayList<>();
+        List<String> cList = new ArrayList<>();
+        while (iterator.hasNext()) {
+            Row row = iterator.next();
+            if (row.getCell(aIndex) != null) {
+                aList.add(row.getCell(aIndex).toString());
+            } else {
+                aList.add("");
+            }
+
+            if (row.getCell(cIndex) != null) {
+                cList.add(row.getCell(cIndex).toString());
+            } else {
+                cList.add("");
+            }
+        }
+        statement.executeUpdate("DELETE FROM debt");
+        for (int x = 0; x < aList.size(); x++) {
+            statement.executeUpdate("INSERT INTO debt (id, child_code, sum_debt) values (" + x + ",'" + aList.get(x) + "','" + cList.get(x) + "');");
+        }
+        myExcelBook.close();
+    }
+
     public List<String> dbAddSchedule(String file, String school, Statement statement) throws Exception {
 
         //Statement statement = connection.createStatement();
@@ -335,6 +386,26 @@ public class DBConnect {
             }
         }
         return false;
+    }
+
+    public String getDebt(Long chatId, Statement statement) throws SQLException {
+        String debt = "";
+        ResultSet rs = statement.executeQuery("select sum_debt from users where user_id=" + chatId);
+        rs.next();
+        debt = rs.getString("sum_debt");
+        rs.close();
+        return debt;
+    }
+
+    public List<String> getDebtFromKSHP(String newCode, Statement statement) throws SQLException {
+        List<String> debt = new ArrayList<>();
+        ResultSet rs = statement.executeQuery("select sum_debt,child_code from debt where REPLACE(child_code, ' ', '')='" + newCode.trim() + "'");
+        while (rs.next()) {
+            debt.add(rs.getString("sum_debt"));
+            debt.add(rs.getString("child_code"));
+        }
+        rs.close();
+        return debt;
     }
 
     public void addOneDay(String insertTableSQL, Statement statement, XSSFRow rowClass, XSSFRow rowClassw, XSSFRow rowLesson, XSSFRow rowDOTW, XSSFSheet myExcelSheet, int dd, String school, String vrm) throws SQLException {
@@ -458,7 +529,6 @@ public class DBConnect {
         ResultSet rs = statement.executeQuery("select user_numberphone from users where user_id=" + chatId);
         rs.next();
         userPhone = rs.getString("user_numberphone");
-        rs.close();
         return userPhone;
     }
 }

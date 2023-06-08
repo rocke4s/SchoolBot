@@ -14,6 +14,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.*;
 import java.io.*;
 import java.net.URL;
@@ -25,7 +28,7 @@ import java.util.regex.Pattern;
 public class Bot extends TelegramLongPollingBot {
 
     final ConfigBot configBot = new ConfigBot();
-    String txt = "";
+    String txt = "", txt2 = "";
     String[] DOTW = new String[]{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"};//TODO игде не используется, удаляем? по идеи его на 458 и 462 строке можно юзать
     String[] rangeElClas = new String[]{"1", "2", "3", "4"};
     String[] rangeMidClas = new String[]{"5", "6", "7", "8"};
@@ -321,7 +324,8 @@ public class Bot extends TelegramLongPollingBot {
                             break;
                         case "Настройки":
                             try {
-                                universalMethodForSend(chatId, "Подписка на уведомления каждый день в 16:00", new String[]{"Подписаться на уведомления", "Убрать подписку", "Удалить аккаунт", "Вернуться"});
+                                universalMethodForSend(chatId, "Подписка на уведомления каждый день в 16:00",
+                                        new String[]{"Подписаться на уведомления", "Убрать подписку", "Удалить аккаунт", "Изменить код", "Вернуться"});
                                 dbConnect.setUserData(chatId, "subs_schedule", "user_state", statement);
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
@@ -342,9 +346,32 @@ public class Bot extends TelegramLongPollingBot {
                                 changeStateSub(chatId, "false", update, "Подписка отозвана!");
                             }
                             break;
+                        case "Изменить код":
+                            sendJustMessage(chatId, "Введите новый код:");
+                            dbConnect.setUserData(chatId, "newCode", "user_state", statement);
+                            break;
                         case "Долг питания":
-                            int dolg = (int) (1 + Math.random() * 20000);
-                            sendJustMessage(chatId, "Ваш задолженность \n составляет: " + dolg + " рублей.");
+                            DecimalFormat decimalFormat = (DecimalFormat) NumberFormat.getInstance();
+                            decimalFormat.applyPattern("###,###.##");
+                            String result = "";
+                            try {
+                                System.out.println(dbConnect.getDebt(chatId, statement));
+                                double value = decimalFormat.parse(dbConnect.getDebt(chatId, statement).replace(".", ",")).doubleValue();
+                                long rubles = (long) value;
+                                int kopeks = (int) Math.round((value - rubles) * 100);
+                                result = String.format("%d рублей", rubles);
+                                if (kopeks > 0) {
+                                    result += String.format(" %d копеек", kopeks);
+                                }
+                                System.out.println(result);
+                            } catch (ParseException e) {
+                                System.err.println("Ошибка при парсинге суммы: " + e.getMessage());
+                            }
+                            if (result != null) {
+                                sendJustMessage(chatId, "Ваш задолженность \n составляет: " + result);
+                            } else {
+                                sendJustMessage(chatId, "В настройках укажите код для отображения задолженности");
+                            }
                             userOrAdmin(chatId);
                         case "Неделя":
                             try {
@@ -361,8 +388,18 @@ public class Bot extends TelegramLongPollingBot {
                                 throw new RuntimeException(e);
                             }
                             break;
+                        case "Загрузить файл задолженностей":
+                            if (AdminShedule.searchAdmin(chatId)) {
+                                setsUserData(chatId, "addFileFromKSHPage", "global_state", "addFileFromKSHPage1", "user_state");
+                            }
+                            break;
                         case "Вернуться":
                             try {
+                                if (dbConnect.getState(chatId, statement).equals("addFileFromKSHPage1")) {
+                                    userOrAdmin(chatId);
+                                    setsUserData(chatId, "Main", "global_state", "default", "user_state");
+                                    break;
+                                }
                                 if (dbConnect.getState(chatId, statement).equals("subs_schedule")) {
                                     userOrAdmin(chatId);
                                     dbConnect.setUserData(chatId, "default", "user_state", statement);
@@ -487,6 +524,14 @@ public class Bot extends TelegramLongPollingBot {
                                 case "defaultday1":
                                     dbConnect.setUserData(chatId, "default", "user_state", statement);
                                     break;
+                                case "newCode":
+                                    if (update.getMessage().hasText()) {
+                                        List<String> newDebtChild = dbConnect.getDebtFromKSHP(update.getMessage().getText(), statement);
+                                        dbConnect.setUserData(chatId, newDebtChild.get(0), "sum_debt", statement);
+                                        dbConnect.setUserData(chatId, newDebtChild.get(1), "child_code", statement);
+                                        userOrAdmin(chatId);
+                                    }
+                                    break;
                                 default:
                                     userOrAdmin(chatId);
                                     break;
@@ -565,6 +610,30 @@ public class Bot extends TelegramLongPollingBot {
                     }
                 } catch (Exception e) {
                     System.out.println(e);
+                }
+            }
+            if (dbConnect.getGlobalState(chatId, statement).equals("addFileFromKSHPage")) {
+                if (update.getMessage().hasText() && update.getMessage().getText().equals("Вернуться")) {
+                    userOrAdmin(chatId);
+                    setsUserData(chatId, "default", "user_state", "Main", "global_state");
+                } else {
+                    try {
+                        uploadFileFromKSHP(update, chatId);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.println("txt= " + txt2);
+                    if (txt2 != "") {
+                        sendJustMessage(chatId, "Добавляем файл задолженностей...");
+                        try {
+                            dbConnect.dbAddDebt(txt2, statement);
+                        } catch (SQLException | ClassNotFoundException | IOException e) {
+                            System.out.println(e);
+                            throw new RuntimeException(e);
+                        }
+                        setsUserData(chatId, "default", "user_state", "Main", "global_state");
+                        userOrAdmin(chatId);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -737,6 +806,37 @@ public class Bot extends TelegramLongPollingBot {
             }
         }
     }
+
+    public void uploadFileFromKSHP(Update update, long chatId) throws Exception {
+        if (update.getMessage().getDocument() == null) {
+            dbConnect.setUserData(chatId, "addFileFromKSHPage1", "user_state", statement);
+            universalMethodForSend(chatId, "Отправьте файл формата Excel", new String[]{"Вернуться"});
+            System.out.println("файл не отправлен!");
+        } else {
+            var file_name = update.getMessage().getDocument().getFileName();
+            System.out.println(file_name);
+            StringUtils.right(file_name, 4);
+            if (StringUtils.right(file_name, 4).equals(".xls") || StringUtils.right(file_name, 5).equals(".xlsx")) {
+                var file_id = update.getMessage().getDocument().getFileId();
+                URL url = new URL("https://api.telegram.org/bot" + getBotToken() + "/getFile?file_id=" + file_id);
+                BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+                String res = in.readLine();
+                JSONObject jresult = new JSONObject(res);
+                JSONObject path = jresult.getJSONObject("result");
+                String file_path = path.getString("file_path");
+                System.out.println("Start upload");
+                File localFile = new File(file_name);
+                txt2 = file_name;
+                InputStream is = new URL("https://api.telegram.org/file/bot" + getBotToken() + "/" + file_path).openStream();
+                FileUtils.copyInputStreamToFile(is, localFile);
+                in.close();
+                is.close();
+                System.out.println("Uploaded!");
+            } else {
+                sendJustMessage(chatId, "Нужен файл в формате эксель");
+            }
+        }
+    }
 //    public static void readFromExcel(String file) throws IOException {
 //        XSSFWorkbook myExcelBook = new XSSFWorkbook(file);
 //        XSSFSheet myExcelSheet = myExcelBook.getSheetAt(0);
@@ -835,7 +935,7 @@ public class Bot extends TelegramLongPollingBot {
                             + "Учебное заведение: " + dbConnect.getSchool(chatId, statement) + "\n"
                             + "Класс: " + ss.spaceBetweenClassAndProf(dbConnect.getClass(chatId, statement)
                             + "\n# <u><b><i>Кнопки расположены под чатом</i></b></u> #"),
-                    new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки", "Долг питания"});
+                    new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки", "Загрузить файл задолженностей", "Долг питания"});
         } else {
             universalMethodForSend(chatId, "Главное меню!\n"
 //                            + "Пользователь, "
