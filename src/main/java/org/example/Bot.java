@@ -379,7 +379,7 @@ public class Bot extends TelegramLongPollingBot {
                                         System.out.println(result);
                                     }
                                 } catch (ParseException e) {
-                                    System.err.println("Ошибка при парсинге суммы: " + e.getMessage());
+                                    System.err.println("Ошибка при парсинге суммыd: " + e.getMessage());
                                 }
                             }
                             if (result.size() != 0) {
