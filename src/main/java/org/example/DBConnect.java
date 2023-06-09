@@ -150,6 +150,24 @@ public class DBConnect {
         statement.executeUpdate("UPDATE users set " + typeData + " = '" + data + "' where user_id=" + chatId);
     }
 
+    public boolean setChildCode(Long chatId, String code, Statement statement) throws Exception {
+        ResultSet rs = statement.executeQuery("SELECT COUNT(*) FROM child_user WHERE user_id ='" + chatId + "' AND child_code='" + code + "'");
+        int count = rs.getInt(1);
+        if (count == 0) {
+            rs = statement.executeQuery("select sum_debt from debt where REPLACE(child_code, ' ', '')='" + code + "'");
+            while (rs.next()) {
+                statement.executeUpdate("insert into child_user (user_id,child_code,sum_debt) values (" + chatId + ",'" + code + "','"
+                        + rs.getString("sum_debt") + "')");
+            }
+            rs.close();
+            return true;
+        } else {
+            rs.close();
+            return false;
+        }
+
+    }
+
 
     //TODO есть мнение что 4 метода ниже идут в один, внезапно. просто еще три строки передаешь где нужные поля, таблицы, и поля для выборки
     public String getState(Long chatId, Statement statement) throws Exception {
@@ -388,13 +406,28 @@ public class DBConnect {
         return false;
     }
 
-    public String getDebt(Long chatId, Statement statement) throws SQLException {
-        String debt = "";
-        ResultSet rs = statement.executeQuery("select sum_debt from users where user_id=" + chatId);
-        rs.next();
-        debt = rs.getString("sum_debt");
+    public List<String> getDebt(Long chatId, Statement statement) throws SQLException {
+        List<String> debt = new ArrayList<>();
+        ResultSet rs = statement.executeQuery("select sum_debt from child_user where user_id=" + chatId);
+        while (rs.next()) {
+            debt.add(rs.getString("sum_debt"));
+        }
         rs.close();
         return debt;
+    }
+
+    public void deleteCodeChild(Long chatId, String code, Statement statement) throws SQLException {
+        statement.executeUpdate("delete from child_user where child_code ='" + code + "' AND user_id = " + chatId);
+    }
+
+    public List<String> getCodeChild(Long chatId, Statement statement) throws SQLException {
+        List<String> code = new ArrayList<>();
+        ResultSet rs = statement.executeQuery("select child_code from child_user where user_id=" + chatId);
+        while (rs.next()) {
+            code.add(rs.getString("child_code"));
+        }
+        rs.close();
+        return code;
     }
 
     public List<String> getDebtFromKSHP(String newCode, Statement statement) throws SQLException {

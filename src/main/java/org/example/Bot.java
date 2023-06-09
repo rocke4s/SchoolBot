@@ -325,7 +325,7 @@ public class Bot extends TelegramLongPollingBot {
                         case "Настройки":
                             try {
                                 universalMethodForSend(chatId, "Подписка на уведомления каждый день в 16:00",
-                                        new String[]{"Подписаться на уведомления", "Убрать подписку", "Удалить аккаунт", "Изменить код", "Вернуться"});
+                                        new String[]{"Подписаться на уведомления", "Убрать подписку", "Удалить аккаунт", "Удалить счет", " Добавить счет", "Вернуться"});
                                 dbConnect.setUserData(chatId, "subs_schedule", "user_state", statement);
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
@@ -346,32 +346,60 @@ public class Bot extends TelegramLongPollingBot {
                                 changeStateSub(chatId, "false", update, "Подписка отозвана!");
                             }
                             break;
-                        case "Изменить код":
-                            sendJustMessage(chatId, "Введите новый код:");
+                        case "Добавить счет":
+                            sendJustMessage(chatId, "Введите новый счет(без пробелов прим. '001123456':");
                             dbConnect.setUserData(chatId, "newCode", "user_state", statement);
+                            break;
+                        case "Удалить счет":
+                            if (dbConnect.getCodeChild(chatId, statement).size() == 0) {
+                                universalMethodForSend(chatId, "У вас нет добавленных счетов!",
+                                        new String[]{"Подписаться на уведомления", "Убрать подписку", "Удалить аккаунт", "Удалить счет", " Добавить счет", "Вернуться"});
+                            } else {
+                                List<String> listForDelCode = dbConnect.getCodeChild(chatId, statement);
+                                listForDelCode.add("Вернуться");
+                                universalMethodForSend(chatId, "Выберите счет для удаления",
+                                        listForDelCode.toArray(new String[0]));
+                                dbConnect.setUserData(chatId, "delCode", "user_state", statement);
+                            }
                             break;
                         case "Долг питания":
                             DecimalFormat decimalFormat = (DecimalFormat) NumberFormat.getInstance();
                             decimalFormat.applyPattern("###,###.##");
-                            String result = "";
-                            try {
-                                System.out.println(dbConnect.getDebt(chatId, statement));
-                                double value = decimalFormat.parse(dbConnect.getDebt(chatId, statement).replace(".", ",")).doubleValue();
-                                long rubles = (long) value;
-                                int kopeks = (int) Math.round((value - rubles) * 100);
-                                result = String.format("%d рублей", rubles);
-                                if (kopeks > 0) {
-                                    result += String.format(" %d копеек", kopeks);
+                            List<String> result = new ArrayList<>();
+                            for (int x = 0; x < dbConnect.getDebt(chatId, statement).size(); x++) {
+                                try {
+                                    if (dbConnect.getDebt(chatId, statement) != null) {
+                                        double value = decimalFormat.parse(dbConnect.getDebt(chatId, statement).get(x).replace(".", ",")).doubleValue();
+                                        long rubles = (long) value;
+                                        int kopeks = (int) Math.round((value - rubles) * 100);
+                                        result.add(String.format("%d рублей", rubles));
+                                        if (kopeks > 0) {
+                                            result.set(x, result.get(x) + String.format(" %d копеек", kopeks));
+                                        }
+                                        System.out.println(result);
+                                    }
+                                } catch (ParseException e) {
+                                    System.err.println("Ошибка при парсинге суммы: " + e.getMessage());
                                 }
-                                System.out.println(result);
-                            } catch (ParseException e) {
-                                System.err.println("Ошибка при парсинге суммы: " + e.getMessage());
                             }
-                            if (result != null) {
-                                sendJustMessage(chatId, "Ваш задолженность \n составляет: " + result);
+                            if (result.size() != 0) {
+                                ListIterator<String> iter = result.listIterator();
+                                String showResult = "";
+                                int x = 0;
+                                while (iter.hasNext()) {
+                                    showResult += "\n" + dbConnect.getCodeChild(chatId, statement).get(x) + " - " + iter.next();
+                                    x++;
+                                }
+                                if (result.size() == 1) {
+                                    sendJustMessage(chatId, "Ваша задолженность \nпо лицевому счету составляет: " + showResult);
+                                } else {
+                                    sendJustMessage(chatId, "Ваша задолженность \nпо лицевым счетам составляет: " + showResult);
+                                }
+
                             } else {
-                                sendJustMessage(chatId, "В настройках укажите код для отображения задолженности");
+                                sendJustMessage(chatId, "Добавьте счет в настройках");
                             }
+                            setsUserData(chatId, "default", "user_state", "Main", "global_state");
                             userOrAdmin(chatId);
                         case "Неделя":
                             try {
@@ -439,6 +467,11 @@ public class Bot extends TelegramLongPollingBot {
                                     userOrAdmin(chatId);
                                     dbConnect.setUserData(chatId, "default", "user_state", statement);
                                     break;
+                                }
+                                if (dbConnect.getState(chatId, statement).equals("delCode")) {
+                                    universalMethodForSend(chatId, "Подписка на уведомления каждый день в 16:00",
+                                            new String[]{"Подписаться на уведомления", "Убрать подписку", "Удалить аккаунт", "Удалить счет", " Добавить счет", "Вернуться"});
+                                    dbConnect.setUserData(chatId, "subs_schedule", "user_state", statement);
                                 }
 
                             } catch (Exception e) {
@@ -526,10 +559,25 @@ public class Bot extends TelegramLongPollingBot {
                                     break;
                                 case "newCode":
                                     if (update.getMessage().hasText()) {
-                                        List<String> newDebtChild = dbConnect.getDebtFromKSHP(update.getMessage().getText(), statement);
-                                        dbConnect.setUserData(chatId, newDebtChild.get(0), "sum_debt", statement);
-                                        dbConnect.setUserData(chatId, newDebtChild.get(1), "child_code", statement);
+                                        if (dbConnect.setChildCode(chatId, update.getMessage().getText(), statement)) {
+                                            sendJustMessage(chatId, "Счет добавлен.");
+                                        } else {
+                                            sendJustMessage(chatId, "Данный счет был добавлен ранее!");
+                                        }
+                                        dbConnect.setUserData(chatId, "default", "user_state", statement);
                                         userOrAdmin(chatId);
+                                    }
+                                    break;
+                                case "delCode":
+                                    if (update.getMessage().hasText()) {
+                                        List<String> listForDelCode = dbConnect.getCodeChild(chatId, statement);
+                                        for (int x = 0; x < listForDelCode.size(); x++) {
+                                            if (listForDelCode.get(x).equals(update.getMessage().getText())) {
+                                                dbConnect.deleteCodeChild(chatId, update.getMessage().getText(), statement);
+                                            }
+                                            dbConnect.setUserData(chatId, "default", "user_state", statement);
+                                            userOrAdmin(chatId);
+                                        }
                                     }
                                     break;
                                 default:
@@ -802,7 +850,7 @@ public class Bot extends TelegramLongPollingBot {
                 System.out.println("Uploaded!");
             } else {
                 universalMethodForSend(chatId, "Нужен файл в формате эксель",
-                        new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки"});
+                        new String[]{"Добавить расписание", "Узнать расписание", "Узнать свое расписание", "Настройки", "Загрузить файл задолженностей", "Долг питания"});
             }
         }
     }
