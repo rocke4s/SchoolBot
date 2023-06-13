@@ -1001,6 +1001,9 @@ public class Bot extends TelegramLongPollingBot {
             rubleWord = "рублей";
         }
         // Копейки
+        if (kopecks == 0) {
+            return rubles + " " + rubleWord;
+        }
         if (kopecks % 10 == 1 && kopecks % 100 != 11) {
             kopeckWord = "копейка";
         } else if (kopecks % 10 >= 2 && kopecks % 10 <= 4 && (kopecks % 100 < 10 || kopecks % 100 >= 20)) {
