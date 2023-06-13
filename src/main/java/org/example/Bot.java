@@ -14,9 +14,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.text.ParseException;
+import java.text.*;
 import java.util.*;
 import java.io.*;
 import java.net.URL;
@@ -363,23 +361,15 @@ public class Bot extends TelegramLongPollingBot {
                             }
                             break;
                         case "Долг питания":
-                            DecimalFormat decimalFormat = (DecimalFormat) NumberFormat.getInstance();
-                            decimalFormat.applyPattern("###,###.##");
                             List<String> result = new ArrayList<>();
                             for (int x = 0; x < dbConnect.getDebt(chatId, statement).size(); x++) {
                                 try {
                                     if (dbConnect.getDebt(chatId, statement) != null) {
-                                        double value = decimalFormat.parse(dbConnect.getDebt(chatId, statement).get(x).replace(".", ",")).doubleValue();
-                                        long rubles = (long) value;
-                                        int kopeks = (int) Math.round((value - rubles) * 100);
-                                        result.add(String.format("%d рублей", rubles));
-                                        if (kopeks > 0) {
-                                            result.set(x, result.get(x) + String.format(" %d копеек", kopeks));
-                                        }
+                                        result.add(formatAmount(dbConnect.getDebt(chatId, statement).get(x)));
                                         System.out.println(result);
                                     }
-                                } catch (ParseException e) {
-                                    System.err.println("Ошибка при парсинге суммыd: " + e.getMessage());
+                                } catch (Exception e) {
+                                    System.err.println("Ошибка при парсинге суммы: " + e.getMessage());
                                 }
                             }
                             if (result.size() != 0) {
@@ -576,8 +566,8 @@ public class Bot extends TelegramLongPollingBot {
                                                 dbConnect.deleteCodeChild(chatId, update.getMessage().getText(), statement);
                                             }
                                             dbConnect.setUserData(chatId, "default", "user_state", statement);
-                                            userOrAdmin(chatId);
                                         }
+                                        userOrAdmin(chatId);
                                     }
                                     break;
                                 default:
@@ -995,6 +985,32 @@ public class Bot extends TelegramLongPollingBot {
                     new String[]{"Узнать расписание", "Узнать свое расписание", "Настройки", "Долг питания"});
         }
     }
+
+    public static String formatAmount(String amountStr) {
+        double amount = Double.parseDouble(amountStr);
+        int rubles = (int) amount;
+        int kopecks = (int) ((amount - rubles) * 100);
+        String rubleWord;
+        String kopeckWord;
+        // Рубли
+        if (rubles % 10 == 1 && rubles % 100 != 11) {
+            rubleWord = "рубль";
+        } else if (rubles % 10 >= 2 && rubles % 10 <= 4 && (rubles % 100 < 10 || rubles % 100 >= 20)) {
+            rubleWord = "рубля";
+        } else {
+            rubleWord = "рублей";
+        }
+        // Копейки
+        if (kopecks % 10 == 1 && kopecks % 100 != 11) {
+            kopeckWord = "копейка";
+        } else if (kopecks % 10 >= 2 && kopecks % 10 <= 4 && (kopecks % 100 < 10 || kopecks % 100 >= 20)) {
+            kopeckWord = "копейки";
+        } else {
+            kopeckWord = "копеек";
+        }
+        return rubles + " " + rubleWord + ", " + kopecks + " " + kopeckWord;
+    }
+
 
     public void requestNumberPhone(Long chatId) {
         ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
